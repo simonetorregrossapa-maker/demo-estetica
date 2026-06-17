@@ -20,7 +20,7 @@
     <div class="eyebrow" style="justify-content:center">Prenotazione online</div>
     <h1 class="serif">Prenota il tuo <span class="italic">momento di bellezza</span></h1>
     <p class="lead" style="max-width:48ch;margin:.8rem auto 0">Scegli il trattamento, l'operatrice e l'orario. Riceverai conferma immediata via email.</p>
-    <p class="hero-micro" style="justify-content:center;margin-top:1rem"><span>✓ Conferma immediata</span><span>✓ Promemoria automatico</span><span>✓ Disdici fino a 24h prima</span></p>
+    <p class="hero-micro" id="bMicro" style="justify-content:center;margin-top:1rem"></p>
   </div>
 </section>
 
@@ -59,7 +59,7 @@
       <div class="fld-row"><label class="fld" for="bNotes">Note (facoltativo)</label><textarea id="bNotes" rows="2" placeholder="Allergie, preferenze, richieste…"></textarea></div>
       <label class="consent fld-row"><input type="checkbox" id="bConsent"/><span>Acconsento al trattamento dei dati per gestire la prenotazione e ricevere conferma/promemoria. <a href="privacy.html">Privacy</a>.</span></label>
 
-      <button class="btn btn-primary" id="submitBtn" style="width:100%;justify-content:center" onclick="Booking.submit()">✦ Conferma prenotazione</button>
+      <button class="btn btn-primary" id="submitBtn" style="width:100%;justify-content:center" onclick="Booking.submit()">Conferma prenotazione</button>
       <p class="muted center small mt1">Nessun pagamento anticipato richiesto.</p>
     </div>
   </div>
@@ -68,7 +68,7 @@
 <!-- MODALE CONFERMA -->
 <div class="modal" id="confirmModal">
   <div class="modal-card">
-    <div style="font-size:2.6rem">🌸</div>
+    <div class="feature-ico" id="confIco" style="margin:0 auto 1rem"></div>
     <h2 class="serif" style="margin:.4rem 0">Prenotazione confermata</h2>
     <p class="muted">Ti abbiamo inviato il riepilogo via email.</p>
     <div class="bsum" id="confSummary"></div>
@@ -81,7 +81,12 @@ SITEUI.mount({
   active: "prenota.html",
   title: "Prenota online",
   description: "Prenota online il tuo trattamento di bellezza: scegli operatrice, giorno e orario. Conferma immediata.",
-  onReady() { Booking.init(); }
+  onReady() {
+    document.getElementById("bMicro").innerHTML = ["Conferma immediata","Promemoria automatico","Disdici fino a 24h prima"]
+      .map(t=>`<span>${SITEUI.icon("check","ico")} ${t}</span>`).join("");
+    document.getElementById("confIco").innerHTML = SITEUI.icon("check","ico");
+    Booking.init();
+  }
 });
 </script>
 </body>

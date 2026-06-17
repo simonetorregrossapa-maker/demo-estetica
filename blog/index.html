@@ -20,24 +20,27 @@
 
 <section class="bg-crema"><div class="container grid-3" id="postBox"></div></section>
 
-<section class="bg-salvia center"><div class="container"><h2 class="serif">Mettiamo in pratica?</h2><p class="lead mt1" style="opacity:.92">Prenota il trattamento giusto per te.</p><div class="mt2"><a class="btn btn-light" href="../prenota.html">✦ Prenota ora</a></div></div></section>
+<section class="bg-salvia center"><div class="container"><h2 class="serif">Mettiamo in pratica?</h2><p class="lead mt1" style="opacity:.92">Prenota il trattamento giusto per te.</p><div class="mt2"><a class="btn btn-light" href="../prenota.html">Prenota ora</a></div></div></section>
 
 <script>
 const POSTS = [
-  ["primo-trattamento-viso.html","✺","Come prepararti al primo trattamento viso","Cosa fare (e non fare) nei giorni prima, cosa aspettarti e come far durare i risultati."],
-  ["cellulite-cosa-funziona.html","❋","Cellulite: cosa funziona davvero","Una guida onesta tra miti e realtà, con i trattamenti più efficaci e le abitudini che aiutano."],
-  ["manicure-semipermanente-guida.html","✿","Manicure semipermanente: la guida","Durata, vantaggi, come prendertene cura e come rimuoverla senza rovinare le unghie."],
+  ["primo-trattamento-viso.html","Come prepararti al primo trattamento viso","Cosa fare (e non fare) nei giorni prima, cosa aspettarti e come far durare i risultati."],
+  ["cellulite-cosa-funziona.html","Cellulite: cosa funziona davvero","Una guida onesta tra miti e realtà, con i trattamenti più efficaci e le abitudini che aiutano."],
+  ["manicure-semipermanente-guida.html","Manicure semipermanente: la guida","Durata, vantaggi, come prendertene cura e come rimuoverla senza rovinare le unghie."],
 ];
 SITEUI.mount({ active:"blog/index.html", base:"../", title:"Blog — Consigli di bellezza",
   description:"Consigli di skincare, benessere e cura di sé dalle estetiste di Bellezza Studio a Palermo.",
   onReady(){
+    const U=SITEUI;
     document.getElementById("postBox").innerHTML = POSTS.map((p,i)=>`
-      <a class="card reveal d${(i%3)+1}" href="${p[0]}" style="text-decoration:none">
-        <div class="g-item" style="aspect-ratio:16/9;margin-bottom:1rem"><div class="ph">${p[1]}</div></div>
-        <span class="pill">Consigli</span>
-        <h3 class="serif" style="margin:.6rem 0 .4rem">${p[2]}</h3>
-        <p class="muted">${p[3]}</p>
-        <p class="price small mt1">Leggi →</p>
+      <a class="cat-card reveal d${(i%3)+1}" href="${p[0]}">
+        <div class="cc-img" style="aspect-ratio:16/10"><img src="${U.photo(SITE.media.blog[i],560,350)}" alt="${p[1]}" loading="lazy" width="560" height="350"/></div>
+        <div class="cc-body">
+          <span class="pill">Consigli</span>
+          <h3 class="serif" style="margin:.6rem 0 .4rem">${p[1]}</h3>
+          <p class="muted">${p[2]}</p>
+          <p class="price small mt1">Leggi l'articolo</p>
+        </div>
       </a>`).join("");
   }
 });

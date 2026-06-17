@@ -39,7 +39,7 @@ function emailHtml(nome: string, attivita: string, trattamento: string, link: st
     <p>${msg.replace("{nome}", nome).replace("{attivita}", attivita).replace("{trattamento}", trattamento)}</p>
     <p style="text-align:center;margin:28px 0">
       <a href="${link}" style="display:inline-block;background:#c98a8a;color:#fff;text-decoration:none;padding:14px 26px;border-radius:8px;font-size:16px">
-        ★ Dicci com'è andata
+        Dicci com'è andata
       </a>
     </p>
     <p style="font-size:13px;color:#8c8378">Un abbraccio,<br>${attivita}</p>
@@ -85,7 +85,7 @@ Deno.serve(async () => {
       headers: { "Authorization": `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         from: mittente, to: p.email,
-        subject: `Com'è andata da ${attivita}? 🌸`,
+        subject: `Com'è andata da ${attivita}?`,
         html: emailHtml(p.nome, attivita, p.servizio, link, msgRichiesta),
       }),
     });

@@ -28,6 +28,27 @@
   /* ── Helper ──────────────────────────────────────────────────────── */
   const waLink = (msg) => `https://wa.me/${S.contatti.whatsapp}?text=${encodeURIComponent(msg || "Ciao! Vorrei informazioni / prenotare un trattamento.")}`;
   const telLink = "tel:" + S.contatti.telHref;
+  // Costruisce l'URL di una foto (Unsplash id verificato, o percorso /assets locale)
+  const photo = (id, w, h) => id && id.startsWith("/") ? id
+    : `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&q=70&w=${w || 900}${h ? "&h=" + h : ""}`;
+
+  // Icone SVG line (stroke 1.5, set coerente — niente emoji)
+  const ICON_PATHS = {
+    shield: '<path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/>',
+    award:  '<circle cx="12" cy="8" r="5"/><path d="M9 12.5L7.5 21 12 18l4.5 3-1.5-8.5"/>',
+    leaf:   '<path d="M11 20A7 7 0 0 1 4 13c0-5 4-9 16-9 0 12-4 16-9 16z"/><path d="M9 16c3-3 5-5 8-6"/>',
+    chat:   '<path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5z"/>',
+    heart:  '<path d="M12 20s-7-4.5-9.5-9A4.5 4.5 0 0 1 12 6a4.5 4.5 0 0 1 9.5 5c-2.5 4.5-9.5 9-9.5 9z"/>',
+    sparkle:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>',
+    clock:  '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    check:  '<path d="M20 6L9 17l-5-5"/>',
+    pin:    '<path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+    phone:  '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L21 13l1 4v0a2 2 0 0 1-2 2A16 16 0 0 1 4 6a2 2 0 0 1 1-2z"/>',
+    clock2: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  };
+  const icon = (name, cls) => `<svg class="${cls || "ico"}" viewBox="0 0 24 24" aria-hidden="true">${ICON_PATHS[name] || ICON_PATHS.sparkle}</svg>`;
+  // Stelle piene per le valutazioni (SVG, colore via currentColor)
+  const stars = (n) => `<span class="stars-row" role="img" aria-label="${n} stelle su 5">${Array.from({length:5},(_,i)=>`<svg viewBox="0 0 24 24" width="15" height="15" fill="${i<n?'currentColor':'none'}" stroke="currentColor" stroke-width="1.3"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.9 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg>`).join("")}</span>`;
   const indirizzoFull = `${S.brand.indirizzo}, ${S.brand.cap} ${S.brand.citta} (${S.brand.provincia})`;
 
   /* ── SEO / <head> ─────────────────────────────────────────────────── */
@@ -45,7 +66,8 @@
     prop("og:type", "website"); prop("og:title", title); prop("og:description", desc); prop("og:url", url); prop("og:locale", "it_IT"); prop("og:site_name", S.brand.nome); prop("og:image", S.seo.dominio + S.seo.ogImage);
     meta("twitter:card", "summary_large_image"); meta("twitter:title", title); meta("twitter:description", desc);
     // favicon emoji
-    const fav = document.createElement("link"); fav.rel = "icon"; fav.href = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✿</text></svg>"; document.head.appendChild(fav);
+    const ini = (S.brand.nome.trim()[0] || "B").toUpperCase();
+    const fav = document.createElement("link"); fav.rel = "icon"; fav.href = "data:image/svg+xml," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='${S.tema.colori.rosa}'/><text x='50' y='72' font-size='62' font-family='Georgia,serif' fill='white' text-anchor='middle'>${ini}</text></svg>`); document.head.appendChild(fav);
   }
 
   /* ── JSON-LD strutturato ──────────────────────────────────────────── */
@@ -81,7 +103,7 @@
     }).join("");
     const el = document.createElement("header"); el.className = "site";
     el.innerHTML = `<div class="nav-inner">
-      <a class="logo" href="${base}index.html"><span class="sym">${S.brand.simbolo}</span> <b>${S.brand.nome}</b></a>
+      <a class="logo" href="${base}index.html"><b>${S.brand.nome}</b><span class="logo-sub">${S.brand.citta}</span></a>
       <ul class="nav-links" id="navLinks">${links}
         <li><a class="nav-cta" href="${base}prenota.html">Prenota</a></li>
       </ul>
@@ -100,7 +122,7 @@
     const orari = S.orari.testo.map(r => `<li><span style="opacity:.7">${r.g}</span> · ${r.o}</li>`).join("");
     f.innerHTML = `<div class="foot-grid">
       <div>
-        <div class="foot-logo">${S.brand.simbolo} ${S.brand.nome}</div>
+        <div class="foot-logo">${S.brand.nome}</div>
         <p style="opacity:.8;max-width:34ch;font-size:.9rem">${S.brand.claim} a ${S.brand.citta}. Bellezza, cura e benessere con prodotti professionali e mani esperte.</p>
         <p style="margin-top:1rem;font-size:.84rem">${S.social.instagram ? `<a href="${S.social.instagram}" target="_blank" rel="noopener">Instagram</a> · ` : ""}${S.social.facebook ? `<a href="${S.social.facebook}" target="_blank" rel="noopener">Facebook</a>` : ""}</p>
       </div>
@@ -129,7 +151,7 @@
   /* ── FAB + COOKIE + REVEAL ───────────────────────────────────────── */
   function extras(base) {
     base = base || "";
-    const fab = document.createElement("a"); fab.className = "fab"; fab.href = base + "prenota.html"; fab.innerHTML = "✦ Prenota"; document.body.appendChild(fab);
+    const fab = document.createElement("a"); fab.className = "fab"; fab.href = base + "prenota.html"; fab.textContent = "Prenota"; document.body.appendChild(fab);
 
     if (localStorage.getItem("cookie_ok") == null) {
       const c = document.createElement("div"); c.id = "cookieBanner"; c.className = "show";
@@ -144,14 +166,14 @@
 
     if (isDemo) {
       const b = document.createElement("div"); b.className = "demo-banner";
-      b.textContent = `✦ Demo personalizzata per ${S.brand.nome} — questo sito potrebbe essere tuo`;
+      b.textContent = `Demo personalizzata per ${S.brand.nome} — questo sito potrebbe essere tuo`;
       document.body.prepend(b);
     }
   }
 
   /* ── API pubblica ─────────────────────────────────────────────────── */
   window.SITEUI = {
-    S, waLink, telLink, indirizzoFull, isDemo,
+    S, waLink, telLink, indirizzoFull, isDemo, photo, icon, stars,
     mount(page) {
       page = page || {};
       const base = page.base || "";

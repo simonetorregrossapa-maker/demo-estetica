@@ -19,9 +19,7 @@
 
 <section class="bg-crema">
   <div class="container grid-2">
-    <div class="reveal">
-      <div class="gallery" style="grid-template-columns:1fr 1fr"><div class="g-item" data-label="La reception"><div class="ph">✦</div></div><div class="g-item" data-label="Cabina viso"><div class="ph">✺</div></div><div class="g-item" data-label="Area relax"><div class="ph">❀</div></div><div class="g-item" data-label="Dettagli"><div class="ph">❋</div></div></div>
-    </div>
+    <div class="reveal"><div class="about-photo"><img id="storyImg" alt="L'ambiente del centro estetico" loading="lazy"/></div></div>
     <div class="reveal d1">
       <div class="eyebrow">La nostra storia</div>
       <h2 class="serif" id="storiaTitle"></h2>
@@ -34,11 +32,7 @@
 <section class="bg-crema-2">
   <div class="container">
     <div class="center" style="margin-bottom:3rem"><div class="eyebrow" style="justify-content:center">I valori</div><h2 class="serif">In cosa <span class="italic">crediamo</span></h2></div>
-    <div class="grid-3">
-      <div class="card reveal"><div class="cat-ico">🤍</div><h3 class="serif" style="margin:.5rem 0">Cura della persona</h3><p class="muted">Ti ascoltiamo prima di ogni trattamento. La tua pelle e il tuo benessere vengono prima di tutto.</p></div>
-      <div class="card reveal d1"><div class="cat-ico">🧼</div><h3 class="serif" style="margin:.5rem 0">Igiene e sicurezza</h3><p class="muted">Protocolli rigorosi, sterilizzazione e materiale monouso. Un ambiente in cui sentirti al sicuro.</p></div>
-      <div class="card reveal d2"><div class="cat-ico">🌿</div><h3 class="serif" style="margin:.5rem 0">Qualità senza compromessi</h3><p class="muted">Solo prodotti professionali e tecniche aggiornate, per risultati che si vedono e durano.</p></div>
-    </div>
+    <div class="grid-3" id="valoriBox"></div>
   </div>
 </section>
 
@@ -49,24 +43,34 @@
   </div>
 </section>
 
-<section class="bg-salvia center"><div class="container"><h2 class="serif">Vieni a trovarci</h2><p class="lead mt1" style="opacity:.92">Prenota il tuo primo trattamento e scopri la differenza.</p><div class="mt2"><a class="btn btn-light" href="prenota.html">✦ Prenota ora</a></div></div></section>
+<section class="bg-salvia center"><div class="container"><h2 class="serif">Vieni a trovarci</h2><p class="lead mt1" style="opacity:.92">Prenota il tuo primo trattamento e scopri la differenza.</p><div class="mt2"><a class="btn btn-light" href="prenota.html">Prenota ora</a></div></div></section>
 
 <script>
 SITEUI.mount({
   active:"chi-siamo.html", title:"Il Centro",
   description:"La storia, la filosofia e il team di Bellezza Studio. Estetiste qualificate, igiene certificata e prodotti professionali.",
   onReady(){
-    const S=SITE;
+    const S=SITE, U=SITEUI;
+    document.getElementById("storyImg").src = U.photo(S.media.chiSiamo, 720, 860);
     document.getElementById("storiaTitle").innerHTML = `${S.brand.anniAttivita} anni dedicati alla <span class="italic">tua bellezza</span>`;
     document.getElementById("storiaP1").textContent = `${S.brand.nome} nasce dalla passione per il benessere e la cura della persona. Dal ${S.legal.annoInizio} accogliamo le nostre clienti in uno spazio pensato per rallentare, prendersi cura di sé e ritrovare equilibrio.`;
     document.getElementById("storiaP2").textContent = `Nel quartiere ${S.brand.quartiere} di ${S.brand.citta}, siamo diventate un punto di riferimento per chi cerca trattamenti efficaci e un'esperienza autentica, fatta di ascolto, competenza e prodotti selezionati.`;
+
+    const valori=[["heart","Cura della persona","Ti ascoltiamo prima di ogni trattamento. La tua pelle e il tuo benessere vengono prima di tutto."],
+                  ["shield","Igiene e sicurezza","Protocolli rigorosi, sterilizzazione e materiale monouso. Un ambiente in cui sentirti al sicuro."],
+                  ["sparkle","Qualità senza compromessi","Solo prodotti professionali e tecniche aggiornate, per risultati che si vedono e durano."]];
+    document.getElementById("valoriBox").innerHTML = valori.map(([ic,t,d],i)=>`
+      <div class="card reveal d${i+1}"><div class="feature-ico">${U.icon(ic)}</div><h3 class="serif" style="margin:.2rem 0 .4rem">${t}</h3><p class="muted">${d}</p></div>`).join("");
+
     document.getElementById("teamBox").innerHTML = S.team.map((m,i)=>`
-      <div class="card reveal d${(i%3)+1}">
-        <div class="av" style="width:64px;height:64px;font-size:1.8rem;margin:0 auto">${m.nome[0]}</div>
-        <h3 class="serif center" style="margin:.6rem 0 .2rem">${m.nome}</h3>
-        <p class="muted center small">${m.ruolo}</p>
-        <p class="small center mt1">${m.bio}</p>
-        <p class="pill" style="display:block;width:max-content;margin:.8rem auto 0">${m.spec}</p>
+      <div class="member reveal d${(i%3)+1}">
+        <div class="member-photo"><img src="${m.foto}" alt="${m.nome}, ${m.ruolo}" loading="lazy" width="400" height="400"/></div>
+        <div class="member-body">
+          <h3 class="serif" style="margin-bottom:.1rem">${m.nome}</h3>
+          <p class="muted small" style="margin-bottom:.6rem">${m.ruolo}</p>
+          <p class="small">${m.bio}</p>
+          <p class="pill" style="margin-top:.8rem">${m.spec}</p>
+        </div>
       </div>`).join("");
   }
 });

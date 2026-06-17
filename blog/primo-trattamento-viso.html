@@ -18,6 +18,7 @@
     <p class="muted">Tempo di lettura: 4 min · a cura delle estetiste di Bellezza Studio</p>
   </div>
 </section>
+<section class="bg-crema" style="padding-bottom:0"><div class="container"><div class="article-cover"><img id="cover" alt="" loading="lazy"/></div></div></section>
 <section class="bg-crema">
   <div class="container prose">
     <p class="lead">Il primo trattamento viso è un piccolo investimento sulla tua pelle. Con qualche accortezza nei giorni precedenti, i risultati saranno migliori e più duraturi. Ecco tutto quello che ti serve sapere.</p>
@@ -55,7 +56,8 @@ SITEUI.mount({ active:"blog/index.html", base:"../",
   schema:[{ "@context":"https://schema.org","@type":"Article",
     headline:"Come prepararti al primo trattamento viso",
     author:{"@type":"Organization",name:SITE.brand.nome},
-    publisher:{"@type":"Organization",name:SITE.brand.nome} }]
+    publisher:{"@type":"Organization",name:SITE.brand.nome} }],
+  onReady(){ document.getElementById("cover").src = SITEUI.photo(SITE.media.blog[0],1200,520); }
 });
 </script>
 </body>

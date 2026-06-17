@@ -14,39 +14,42 @@
     <div class="breadcrumb"><a href="index.html">Home</a> › Galleria</div>
     <div class="eyebrow">Galleria</div>
     <h1 class="serif">L'ambiente e i <span class="italic">nostri risultati</span></h1>
-    <p class="lead" style="max-width:56ch;margin-top:.8rem">Uno sguardo al nostro spazio, ai trattamenti e ad alcuni risultati. <span class="muted">(Le immagini placeholder vanno sostituite con foto reali del centro.)</span></p>
+    <p class="lead" style="max-width:56ch;margin-top:.8rem">Uno sguardo al nostro spazio e ad alcuni risultati dei trattamenti. <span class="muted">(Foto dimostrative, da sostituire con immagini reali del centro.)</span></p>
   </div>
 </section>
 
 <section class="bg-crema">
   <div class="container">
     <h2 class="serif mb1">L'ambiente</h2>
-    <div class="gallery reveal">
-      <div class="g-item" data-label="Reception"><div class="ph">✦</div></div>
-      <div class="g-item" data-label="Cabina viso"><div class="ph">✺</div></div>
-      <div class="g-item" data-label="Sala massaggi"><div class="ph">❀</div></div>
-      <div class="g-item" data-label="Area nail"><div class="ph">✿</div></div>
-      <div class="g-item" data-label="Area relax"><div class="ph">❋</div></div>
-      <div class="g-item" data-label="Dettagli"><div class="ph">♦</div></div>
-      <div class="g-item" data-label="Prodotti"><div class="ph">✷</div></div>
-      <div class="g-item" data-label="Ingresso"><div class="ph">✦</div></div>
-    </div>
+    <div class="gallery reveal" id="ambBox"></div>
 
     <h2 class="serif mb1" style="margin-top:3rem">Before / After</h2>
     <p class="muted mb1">Spazio dedicato ai risultati dei trattamenti (con consenso delle clienti).</p>
-    <div class="grid-3 reveal">
-      <div class="card"><div class="gallery" style="grid-template-columns:1fr 1fr;gap:.4rem"><div class="g-item" data-label="Prima"><div class="ph">◐</div></div><div class="g-item" data-label="Dopo"><div class="ph">◑</div></div></div><p class="small center mt1">Trattamento viso purificante</p></div>
-      <div class="card"><div class="gallery" style="grid-template-columns:1fr 1fr;gap:.4rem"><div class="g-item" data-label="Prima"><div class="ph">◐</div></div><div class="g-item" data-label="Dopo"><div class="ph">◑</div></div></div><p class="small center mt1">Percorso anticellulite</p></div>
-      <div class="card"><div class="gallery" style="grid-template-columns:1fr 1fr;gap:.4rem"><div class="g-item" data-label="Prima"><div class="ph">◐</div></div><div class="g-item" data-label="Dopo"><div class="ph">◑</div></div></div><p class="small center mt1">Manicure semipermanente</p></div>
-    </div>
+    <div class="grid-3 reveal" id="baBox"></div>
   </div>
 </section>
 
-<section class="bg-salvia center"><div class="container"><h2 class="serif">Ti aspettiamo</h2><div class="mt2"><a class="btn btn-light" href="prenota.html">✦ Prenota il tuo trattamento</a></div></div></section>
+<section class="bg-salvia center"><div class="container"><h2 class="serif">Ti aspettiamo</h2><div class="mt2"><a class="btn btn-light" href="prenota.html">Prenota il tuo trattamento</a></div></div></section>
 
 <script>
 SITEUI.mount({ active:"galleria.html", title:"Galleria",
-  description:"Foto dell'ambiente, dei trattamenti e dei risultati di Bellezza Studio a Palermo." });
+  description:"Foto dell'ambiente, dei trattamenti e dei risultati di Bellezza Studio a Palermo.",
+  onReady(){
+    const S=SITE, U=SITEUI;
+    const labels=["Reception","Cabina viso","Sala massaggi","Area nail","Area relax","Dettagli","Prodotti","Ingresso"];
+    document.getElementById("ambBox").innerHTML = S.media.ambiente.map((id,i)=>`
+      <div class="g-item" data-label="${labels[i]||""}"><img src="${U.photo(id,500,500)}" alt="${labels[i]||'Ambiente'}" loading="lazy" width="500" height="500"/></div>`).join("");
+    const baLabels=["Trattamento viso purificante","Percorso anticellulite","Manicure semipermanente"];
+    document.getElementById("baBox").innerHTML = S.media.beforeAfter.map((pair,i)=>`
+      <div class="card">
+        <div class="ba">
+          <div class="g-item" data-label="Prima"><img src="${U.photo(pair[0],360,480)}" alt="Prima" loading="lazy"/></div>
+          <div class="g-item" data-label="Dopo"><img src="${U.photo(pair[1],360,480)}" alt="Dopo" loading="lazy"/></div>
+        </div>
+        <p class="small center mt1">${baLabels[i]||""}</p>
+      </div>`).join("");
+  }
+});
 </script>
 </body>
 </html>

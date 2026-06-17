@@ -18,8 +18,6 @@ window.SITE = {
     cap:         "90144",
     indirizzo:   "Via della Libertà 128",
     quartiere:   "Libertà",
-    // Logo testuale (✦ + nome). Per un logo immagine, sostituisci in components.js
-    simbolo:     "✦",
     anniAttivita: 12,
     pIva:        "01234567890",
   },
@@ -55,18 +53,19 @@ window.SITE = {
   // Palette beauty: cipria/rosa antico + verde salvia + crema. Modificabile qui.
   tema: {
     // I valori vengono iniettati come CSS custom properties (--nome) da components.js
+    // Palette beauty sofisticata e calda — NIENTE oro. Rosa antico/cipria +
+    // verde salvia + crema/tortora. Tonalità verificate per contrasto AA.
     colori: {
-      "rosa":        "#c98a8a",   // accento primario (rosa antico)
-      "rosa-light":  "#e3b7b3",
-      "rosa-dark":   "#a86b6b",
-      "salvia":      "#8a9b86",   // accento secondario (verde salvia)
-      "salvia-dark": "#5f6e5c",
-      "crema":       "#faf6f1",   // sfondo chiaro
-      "crema-2":     "#f3ece3",
-      "sabbia":      "#e8ddd0",
-      "carbone":     "#2e2a26",   // testo scuro
-      "grigio":      "#8c8378",   // testo tenue
-      "oro":         "#c2a36b",   // dettagli premium
+      "rosa":        "#c28f88",   // cipria / rosa antico — accento decorativo
+      "rosa-light":  "#e0c2bd",   // blush tenue (sfondi morbidi, avatar)
+      "rosa-dark":   "#9c5e58",   // azione/CTA e testo accento (AA su bianco)
+      "salvia":      "#93a48e",   // verde salvia — accento secondario
+      "salvia-dark": "#5e6e5a",   // sezioni salvia + testo (AA su bianco)
+      "crema":       "#f7f3ed",   // sfondo chiaro caldo
+      "crema-2":     "#efe7db",   // crema più profonda
+      "sabbia":      "#e2d7c8",   // tortora/sabbia — bordi e divisori
+      "carbone":     "#322d28",   // testo scuro caldo (near-black)
+      "grigio":      "#786e62",   // testo tenue (contrasto migliorato)
     },
     fontTitoli:  "'Cormorant Garamond', serif",
     fontTesto:   "'Outfit', sans-serif",
@@ -77,7 +76,7 @@ window.SITE = {
   // Trattamenti, selettore in prenotazione, schema.org Service.
   categorie: [
     {
-      id: "viso", nome: "Viso", icona: "✺",
+      id: "viso", nome: "Viso", foto: "1596755094514-f87e34085b2c",
       descr: "Trattamenti viso personalizzati: pulizia profonda, idratazione e anti-età.",
       trattamenti: [
         { nome: "Pulizia viso profonda",      durata: 60, prezzo: 55, descr: "Detersione, esfoliazione, estrazione e maschera su misura del tuo tipo di pelle." },
@@ -87,7 +86,7 @@ window.SITE = {
       ],
     },
     {
-      id: "corpo", nome: "Corpo", icona: "❋",
+      id: "corpo", nome: "Corpo", foto: "1540555700478-4be289fbecef",
       descr: "Rituali corpo rimodellanti, drenanti e rilassanti.",
       trattamenti: [
         { nome: "Massaggio rilassante",        durata: 50, prezzo: 55, descr: "Manualità lente e avvolgenti per sciogliere tensioni e ritrovare equilibrio." },
@@ -97,7 +96,7 @@ window.SITE = {
       ],
     },
     {
-      id: "epilazione", nome: "Epilazione", icona: "♦",
+      id: "epilazione", nome: "Epilazione", foto: "1598440947619-2c35fc9aa908",
       descr: "Epilazione con cera tiepida e prodotti lenitivi professionali.",
       trattamenti: [
         { nome: "Gambe complete",     durata: 40, prezzo: 28, descr: "Epilazione gambe intere con cera delicata e trattamento post-epilatorio." },
@@ -107,7 +106,7 @@ window.SITE = {
       ],
     },
     {
-      id: "mani-piedi", nome: "Mani & Piedi", icona: "✿",
+      id: "mani-piedi", nome: "Mani & Piedi", foto: "1607779097040-26e80aa78e66",
       descr: "Manicure e pedicure curate, con smalti semipermanenti di alta tenuta.",
       trattamenti: [
         { nome: "Manicure classica",          durata: 40, prezzo: 25, descr: "Cura delle cuticole, limatura e smalto a scelta." },
@@ -117,7 +116,7 @@ window.SITE = {
       ],
     },
     {
-      id: "massaggi", nome: "Massaggi & Benessere", icona: "❀",
+      id: "massaggi", nome: "Massaggi & Benessere", foto: "1570172619644-dfd03ed5d881",
       descr: "Percorsi benessere per corpo e mente.",
       trattamenti: [
         { nome: "Massaggio decontratturante", durata: 50, prezzo: 60, descr: "Mirato su collo, spalle e schiena per sciogliere le contratture." },
@@ -131,9 +130,9 @@ window.SITE = {
   /* ── OPERATRICI / ESTETISTE ────────────────────────────────────────── */
   // Equivalente della "scelta barbiere". La prima è il default.
   team: [
-    { nome: "Giulia",   ruolo: "Titolare · Estetista qualificata", esperienza: "12 anni", spec: "Trattamenti viso e anti-age", bio: "Diplomata estetista e specializzata in dermocosmesi, fonda Bellezza Studio nel 2014." },
-    { nome: "Martina",  ruolo: "Estetista · Massoterapista",        esperienza: "8 anni",  spec: "Massaggi e rituali corpo",   bio: "Esperta in tecniche di massaggio e linfodrenaggio, segue i percorsi benessere." },
-    { nome: "Sara",     ruolo: "Onicotecnica",                       esperienza: "5 anni",  spec: "Mani, piedi e nail care",   bio: "Specializzata in ricostruzione e nail art, cura mani e piedi nei minimi dettagli." },
+    { nome: "Giulia",   ruolo: "Titolare · Estetista qualificata", esperienza: "12 anni", spec: "Trattamenti viso e anti-age", bio: "Diplomata estetista e specializzata in dermocosmesi, fonda Bellezza Studio nel 2014.", foto: "https://i.pravatar.cc/400?img=45" },
+    { nome: "Martina",  ruolo: "Estetista · Massoterapista",        esperienza: "8 anni",  spec: "Massaggi e rituali corpo",   bio: "Esperta in tecniche di massaggio e linfodrenaggio, segue i percorsi benessere.", foto: "https://i.pravatar.cc/400?img=47" },
+    { nome: "Sara",     ruolo: "Onicotecnica",                       esperienza: "5 anni",  spec: "Mani, piedi e nail care",   bio: "Specializzata in ricostruzione e nail art, cura mani e piedi nei minimi dettagli.", foto: "https://i.pravatar.cc/400?img=44" },
   ],
 
   /* ── PACCHETTI / PERCORSI / BUONI REGALO ───────────────────────────── */
@@ -156,7 +155,7 @@ window.SITE = {
   numeri: [
     { valore: "12",     label: "Anni di attività" },
     { valore: "4.000+", label: "Clienti soddisfatte" },
-    { valore: "4,9★",   label: "Media recensioni Google" },
+    { valore: "4,9",    label: "Media recensioni Google" },
     { valore: "100%",   label: "Prodotti professionali" },
   ],
 
@@ -167,6 +166,21 @@ window.SITE = {
     { nome: "Valentina S.",  voto: 5, testo: "Il percorso drenante ha fatto la differenza. Mi sono sentita seguita seduta dopo seduta.", fonte: "Recensione Google" },
     { nome: "Alessia D.",    voto: 5, testo: "Prenotazione online comodissima e conferma immediata. La pedicure curativa è top.", fonte: "Recensione Google" },
   ],
+
+  /* ── MEDIA / FOTO ──────────────────────────────────────────────────── */
+  // ID foto Unsplash (verificate). Helper SITEUI.photo(id,w,h) costruisce l'URL.
+  // Sostituibili con foto reali del centro: stesso id Unsplash o un percorso /assets.
+  media: {
+    hero:        "1571781926291-c477ebfd024b",
+    chiSiamo:    "1512290923902-8a9f81dc236c",
+    ambiente:    ["1519823551278-64ac92734fb1","1580618672591-eb180b1a973f","1512290923902-8a9f81dc236c",
+                  "1519014816548-bf5fe059798b","1600334089648-b0d9d3028eb2","1556228578-8c89e6adf883",
+                  "1542848284-8afa78a08ccb","1559599101-f09722fb4948"],
+    beforeAfter: [["1633681926022-84c23e8cb2d6","1632345031435-8727f6897d53"],
+                  ["1612817288484-6f916006741a","1540555700478-4be289fbecef"],
+                  ["1604654894610-df63bc536371","1607779097040-26e80aa78e66"]],
+    blog:        ["1503236823255-94609f598e71","1487412947147-5cebf100ffc2","1604654894610-df63bc536371"],
+  },
 
   /* ── SOCIAL ────────────────────────────────────────────────────────── */
   social: {
@@ -202,8 +216,8 @@ window.SITE = {
     sogliaStelle:     4,          // >= soglia → Google ; < soglia → feedback privato
     // Template messaggi (segnaposto: {nome}, {trattamento}, {attivita})
     messaggi: {
-      richiesta:  "Ciao {nome}, grazie per essere stata da {attivita}! Com'è andato il tuo {trattamento}? Ci basta un attimo del tuo tempo 💖",
-      ringraziamentoPubblico: "Grazie di cuore {nome}! Ci faresti felici lasciando due righe su Google 🌟",
+      richiesta:  "Ciao {nome}, grazie per essere stata da {attivita}. Com'è andato il tuo {trattamento}? Ci basta un attimo del tuo tempo.",
+      ringraziamentoPubblico: "Grazie di cuore {nome}. Ci faresti felici lasciando due righe su Google.",
       ringraziamentoPrivato:  "Grazie {nome}. Ci dispiace non essere stati all'altezza: raccontaci cosa è andato storto, vogliamo rimediare.",
     },
     consensoObbligatorio: true,   // GDPR: invio solo con consenso esplicito

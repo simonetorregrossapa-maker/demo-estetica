@@ -14,7 +14,7 @@
     <div class="breadcrumb" style="text-align:left"><a href="index.html">Home</a> › Recensioni</div>
     <div class="eyebrow" style="justify-content:center">Dicono di noi</div>
     <h1 class="serif">La fiducia delle <span class="italic">nostre clienti</span></h1>
-    <div class="stars" style="color:var(--oro);font-size:1.6rem;letter-spacing:.15em;margin-top:.6rem">★★★★★</div>
+    <div class="stars" id="hdrStars" style="font-size:1.2rem;margin-top:.6rem;justify-content:center"></div>
     <p class="muted">Media 4,9 su 5 — oltre 187 recensioni Google</p>
   </div>
 </section>
@@ -40,11 +40,12 @@ SITEUI.mount({
     itemReviewed:{"@type":"BeautySalon",name:SITE.brand.nome}, reviewBody:r.testo })),
   onReady(){
     const S=SITE;
+    document.getElementById("hdrStars").innerHTML = SITEUI.stars(5);
     // duplico le testimonianze per riempire la griglia in modo realistico
     const all = S.recensioni.concat(S.recensioni.map(r=>({...r})));
     document.getElementById("revBox").innerHTML = all.map((r,i)=>`
-      <div class="review reveal d${(i%3)+1}"><div class="stars">${"★".repeat(r.voto)}</div><p class="small">"${r.testo}"</p><div class="who">${r.nome}</div><div class="src">${r.fonte} · ${r.voto}/5</div></div>`).join("");
-    document.getElementById("gReview").innerHTML = `<a class="btn btn-primary" href="${Reviews.googleUrl()}" target="_blank" rel="noopener">★ Lascia una recensione su Google</a>`;
+      <div class="review reveal d${(i%3)+1}"><div class="stars">${SITEUI.stars(r.voto)}</div><p class="small">"${r.testo}"</p><div class="who">${r.nome}</div><div class="src">${r.fonte} · ${r.voto}/5</div></div>`).join("");
+    document.getElementById("gReview").innerHTML = `<a class="btn btn-primary" href="${Reviews.googleUrl()}" target="_blank" rel="noopener">Lascia una recensione su Google</a>`;
   }
 });
 </script>

@@ -45,19 +45,20 @@ SITEUI.mount({
   }))),
   onReady() {
     const S = SITE;
-    document.getElementById("catNav").innerHTML = S.categorie.map(c=>`<a class="chip" href="#${c.id}">${c.icona} ${c.nome}</a>`).join("");
+    const U = SITEUI;
+    document.getElementById("catNav").innerHTML = S.categorie.map(c=>`<a class="chip" href="#${c.id}">${c.nome}</a>`).join("");
     document.getElementById("catSections").innerHTML = S.categorie.map(c=>`
-      <div id="${c.id}" style="margin-bottom:3.2rem;scroll-margin-top:90px" class="reveal">
-        <div style="display:flex;align-items:baseline;gap:.8rem;border-bottom:2px solid var(--sabbia);padding-bottom:.8rem;margin-bottom:1rem">
-          <span class="cat-ico">${c.icona}</span><h2 class="serif">${c.nome}</h2>
+      <div id="${c.id}" style="margin-bottom:3.4rem;scroll-margin-top:96px" class="reveal">
+        <div class="cat-head">
+          <img src="${U.photo(c.foto,200,200)}" alt="${c.nome}" loading="lazy" width="72" height="72" class="cat-thumb"/>
+          <div><h2 class="serif">${c.nome}</h2><p class="muted small" style="margin-top:.2rem">${c.descr}</p></div>
         </div>
-        <p class="muted mb1">${c.descr}</p>
         ${c.trattamenti.map(t=>`
           <div class="treat">
             <div>
               <strong>${t.nome}</strong>
               <div class="t-meta">${t.descr}</div>
-              <div class="t-meta">⏱ ${t.durata} min</div>
+              <div class="t-meta" style="display:inline-flex;align-items:center;gap:.35rem;margin-top:.3rem">${U.icon("clock","ico-sm")} ${t.durata} min</div>
             </div>
             <div style="text-align:right;display:flex;flex-direction:column;gap:.5rem;align-items:flex-end">
               <span class="t-price">${t.prezzo}€</span>

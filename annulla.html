@@ -26,7 +26,7 @@ SITEUI.mount({ active:null, title:"Annulla prenotazione",
     const sb=SITEAPP.getClient();
     if(!token){ box.innerHTML=`<h1 class="serif">Link non valido</h1><p class="lead mt1">Usa il link presente nella tua email di conferma.</p><a class="btn btn-primary mt2" href="index.html">Torna al sito</a>`; return; }
     if(!sb){
-      box.innerHTML=`<div style="font-size:2.6rem">✓</div><h1 class="serif">Prenotazione annullata</h1><p class="lead mt1">(Demo) In produzione, con Supabase attivo, la disdetta viene registrata e l'orario torna disponibile.</p><a class="btn btn-primary mt2" href="index.html">Torna al sito</a>`; return;
+      box.innerHTML=`<div class="feature-ico" style="margin:0 auto 1rem">${SITEUI.icon("check","ico")}</div><h1 class="serif">Prenotazione annullata</h1><p class="lead mt1">(Demo) In produzione, con Supabase attivo, la disdetta viene registrata e l'orario torna disponibile.</p><a class="btn btn-primary mt2" href="index.html">Torna al sito</a>`; return;
     }
     box.innerHTML=`<p class="lead">Verifico la prenotazione…</p>`;
     try{
@@ -42,7 +42,7 @@ SITEUI.mount({ active:null, title:"Annulla prenotazione",
         <a class="btn btn-outline mt1" href="index.html">No, mantienila</a>`;
       document.getElementById("doCancel").onclick=async()=>{
         await sb.from("prenotazioni").update({stato:"cancellata"}).eq("cancel_token",token);
-        box.innerHTML=`<div style="font-size:2.6rem">✓</div><h1 class="serif">Annullata</h1><p class="lead mt1">La tua prenotazione è stata annullata. Ci dispiace non vederti, a presto!</p><a class="btn btn-primary mt2" href="prenota.html">Prenota un altro momento</a>`;
+        box.innerHTML=`<div class="feature-ico" style="margin:0 auto 1rem">${SITEUI.icon("check","ico")}</div><h1 class="serif">Annullata</h1><p class="lead mt1">La tua prenotazione è stata annullata. Ci dispiace non vederti, a presto!</p><a class="btn btn-primary mt2" href="prenota.html">Prenota un altro momento</a>`;
       };
     }catch(e){ box.innerHTML=`<h1 class="serif">Errore</h1><p class="lead mt1">Riprova o chiamaci.</p>`; }
   }

@@ -60,16 +60,16 @@ SITEUI.mount({
     document.getElementById("mapsFrame").src = S.contatti.mapsEmbed || `https://maps.google.com/maps?q=${encodeURIComponent(S.contatti.mapsQuery)}&output=embed&hl=it&z=16`;
     document.getElementById("kSend").onclick = async ()=>{
       const g=id=>document.getElementById(id).value.trim();
-      if(!g("kName")||!g("kEmail")) return SITEAPP.toast("⚠️","Compila nome ed email");
-      if(!document.getElementById("kConsent").checked) return SITEAPP.toast("⚠️","Serve il consenso privacy");
+      if(!g("kName")||!g("kEmail")) return SITEAPP.toast("Compila nome ed email","warn");
+      if(!document.getElementById("kConsent").checked) return SITEAPP.toast("Serve il consenso privacy","warn");
       try{
         if(S.integrazioni.web3formsKey && S.integrazioni.web3formsKey!=="YOUR_WEB3FORMS_KEY"){
           await Booking.w3f("CONTATTO dal sito:\n\n"+g("kMsg"), g("kName"), g("kEmail"));
         }
-        SITEAPP.toast("✓","Messaggio inviato! Ti ricontattiamo presto.");
+        SITEAPP.toast("Messaggio inviato! Ti ricontattiamo presto.","ok");
         ["kName","kEmail","kMsg"].forEach(id=>document.getElementById(id).value="");
         document.getElementById("kConsent").checked=false;
-      }catch(e){ SITEAPP.toast("❌","Errore. Chiamaci al "+S.contatti.telDisplay); }
+      }catch(e){ SITEAPP.toast("Errore. Chiamaci al "+S.contatti.telDisplay,"err"); }
     };
   }
 });

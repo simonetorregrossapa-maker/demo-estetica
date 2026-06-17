@@ -15,16 +15,20 @@
 <!-- HERO -->
 <section class="hero">
   <div class="hero-bg"></div><div class="hero-blob a"></div><div class="hero-blob b"></div>
-  <div class="hero-inner">
-    <div class="eyebrow" id="heroEyebrow">Istituto di bellezza</div>
-    <h1 class="serif">La tua bellezza, <span class="italic">curata nei dettagli</span></h1>
-    <p class="lead">Trattamenti viso e corpo, massaggi e rituali benessere con prodotti professionali e mani esperte. Un luogo dove rallentare e ritrovarti.</p>
-    <div class="hero-cta">
-      <a class="btn btn-primary" href="prenota.html">✦ Prenota ora</a>
-      <a class="btn btn-outline" href="trattamenti.html">Scopri i trattamenti</a>
+  <div class="hero-grid">
+    <div>
+      <div class="eyebrow" id="heroEyebrow">Istituto di bellezza</div>
+      <h1 class="serif">La tua bellezza, <span class="italic">curata nei dettagli</span></h1>
+      <p class="lead">Trattamenti viso e corpo, massaggi e rituali benessere con prodotti professionali e mani esperte. Un luogo dove rallentare e ritrovarti.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="prenota.html">Prenota ora</a>
+        <a class="btn btn-outline" href="trattamenti.html">Scopri i trattamenti</a>
+      </div>
+      <div class="hero-micro" id="heroMicro"></div>
     </div>
-    <div class="hero-micro">
-      <span>✓ Prenotazione in 30 secondi</span><span>✓ Conferma immediata</span><span>✓ Disdici fino a 24h prima</span>
+    <div class="hero-media reveal-r">
+      <img id="heroImg" alt="Trattamento viso in cabina estetica" width="720" height="900"/>
+      <div class="hero-badge"><b id="heroRating">4,9 / 5</b> · oltre 4.000 clienti soddisfatte</div>
     </div>
   </div>
 </section>
@@ -42,11 +46,11 @@
       <h2 class="serif">Un trattamento per ogni <span class="italic">esigenza</span></h2>
     </div>
     <div class="grid-3" id="catBox"></div>
-    <div class="center mt2"><a class="btn btn-outline" href="trattamenti.html">Vedi tutti i trattamenti & prezzi</a></div>
+    <div class="center mt2"><a class="btn btn-outline" href="trattamenti.html">Vedi tutti i trattamenti &amp; prezzi</a></div>
   </div>
 </section>
 
-<!-- PERCHÉ NOI (fiducia) -->
+<!-- PERCHÉ NOI -->
 <section class="bg-salvia">
   <div class="container grid-2">
     <div class="reveal">
@@ -54,12 +58,7 @@
       <h2 class="serif">Professionalità, igiene e <span class="italic">prodotti che amiamo</span></h2>
       <p class="lead mt1" style="opacity:.92">Ogni trattamento segue protocolli rigorosi di igiene e sicurezza. Le nostre estetiste sono qualificate e aggiornate sulle tecniche più efficaci, e lavoriamo solo con marchi professionali selezionati.</p>
     </div>
-    <div class="grid-2 reveal d1" style="gap:1rem">
-      <div class="card" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18);color:var(--crema)"><div class="cat-ico">🧼</div><h3 style="color:var(--crema);margin:.5rem 0">Igiene certificata</h3><p style="opacity:.85;font-size:.9rem">Sterilizzazione strumenti e materiale monouso ad ogni cliente.</p></div>
-      <div class="card" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18);color:var(--crema)"><div class="cat-ico">🎓</div><h3 style="color:var(--crema);margin:.5rem 0">Estetiste qualificate</h3><p style="opacity:.85;font-size:.9rem">Formazione continua e anni di esperienza al tuo servizio.</p></div>
-      <div class="card" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18);color:var(--crema)"><div class="cat-ico">🌿</div><h3 style="color:var(--crema);margin:.5rem 0">Prodotti professionali</h3><p style="opacity:.85;font-size:.9rem">Cosmetici dermatologicamente testati, rispettosi della pelle.</p></div>
-      <div class="card" style="background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18);color:var(--crema)"><div class="cat-ico">💬</div><h3 style="color:var(--crema);margin:.5rem 0">Consulenza su misura</h3><p style="opacity:.85;font-size:.9rem">Analisi della pelle e percorso personalizzato per i tuoi obiettivi.</p></div>
-    </div>
+    <div class="grid-2 reveal d1" style="gap:1rem" id="whyBox"></div>
   </div>
 </section>
 
@@ -91,7 +90,7 @@
   <div class="container">
     <h2 class="serif">Pronta a regalarti <span class="italic">un momento per te?</span></h2>
     <p class="lead mt1" style="opacity:.92;max-width:50ch;margin-inline:auto">Prenota online il tuo trattamento: scegli operatrice, giorno e orario in pochi tocchi.</p>
-    <div class="mt2"><a class="btn btn-light" href="prenota.html">✦ Prenota ora</a></div>
+    <div class="mt2"><a class="btn btn-light" href="prenota.html">Prenota ora</a></div>
   </div>
 </section>
 
@@ -101,28 +100,51 @@ SITEUI.mount({
   title: null,
   schema: [{ "@context":"https://schema.org", "@type":"WebSite", name: SITE.brand.nome, url: SITE.seo.dominio }],
   onReady() {
-    const S = SITE;
+    const S = SITE, U = SITEUI;
     document.getElementById("heroEyebrow").textContent = `${S.brand.claim} · ${S.brand.citta}`;
+    document.getElementById("heroImg").src = U.photo(S.media.hero, 760, 950);
+    document.getElementById("heroRating").textContent = (S.numeri.find(n=>n.valore.includes(","))?.valore || "4,9") + " / 5";
+    document.getElementById("heroMicro").innerHTML = ["Prenotazione in 30 secondi","Conferma immediata","Disdici fino a 24h prima"]
+      .map(t=>`<span>${U.icon("check","ico")} ${t}</span>`).join("");
+
     document.getElementById("numeriBox").innerHTML = S.numeri.map(n=>`<div class="stat reveal"><div class="v">${n.valore}</div><div class="l">${n.label}</div></div>`).join("");
+
     document.getElementById("catBox").innerHTML = S.categorie.map((c,i)=>`
-      <a class="card reveal d${(i%3)+1}" href="trattamenti.html#${c.id}" style="text-decoration:none">
-        <div class="cat-ico">${c.icona}</div>
-        <h3 class="serif" style="margin:.6rem 0 .4rem">${c.nome}</h3>
-        <p class="muted">${c.descr}</p>
-        <p class="price small mt1">da ${Math.min(...c.trattamenti.map(t=>t.prezzo))}€ →</p>
+      <a class="cat-card reveal d${(i%3)+1}" href="trattamenti.html#${c.id}">
+        <div class="cc-img"><img src="${U.photo(c.foto,560,420)}" alt="${c.nome}" loading="lazy" width="560" height="420"/></div>
+        <div class="cc-body">
+          <h3 class="serif" style="margin-bottom:.4rem">${c.nome}</h3>
+          <p class="muted">${c.descr}</p>
+          <p class="price small mt1">da ${Math.min(...c.trattamenti.map(t=>t.prezzo))}€</p>
+        </div>
       </a>`).join("");
-    document.getElementById("teamBox").innerHTML = S.team.map((m,i)=>`
-      <div class="card reveal d${(i%3)+1}">
-        <div class="op-btn" style="border:none;pointer-events:none;padding:0"><div class="av" style="width:64px;height:64px;font-size:1.8rem">${m.nome[0]}</div></div>
-        <h3 class="serif center" style="margin:.6rem 0 .2rem">${m.nome}</h3>
-        <p class="muted center" style="margin-bottom:.6rem">${m.ruolo}</p>
-        <p class="small center">${m.bio}</p>
-        <p class="pill" style="display:block;width:max-content;margin:.8rem auto 0">${m.esperienza} di esperienza</p>
+
+    const why = [["shield","Igiene certificata","Sterilizzazione strumenti e materiale monouso ad ogni cliente."],
+                 ["award","Estetiste qualificate","Formazione continua e anni di esperienza al tuo servizio."],
+                 ["leaf","Prodotti professionali","Cosmetici dermatologicamente testati, rispettosi della pelle."],
+                 ["chat","Consulenza su misura","Analisi della pelle e percorso personalizzato per i tuoi obiettivi."]];
+    document.getElementById("whyBox").innerHTML = why.map(([ic,t,d])=>`
+      <div class="card" style="background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.20);color:var(--crema)">
+        <div class="feature-ico">${U.icon(ic)}</div>
+        <h3 class="serif" style="color:var(--crema);margin:.2rem 0 .4rem">${t}</h3>
+        <p style="opacity:.88;font-size:.9rem">${d}</p>
       </div>`).join("");
+
+    document.getElementById("teamBox").innerHTML = S.team.map((m,i)=>`
+      <div class="member reveal d${(i%3)+1}">
+        <div class="member-photo"><img src="${m.foto}" alt="${m.nome}, ${m.ruolo}" loading="lazy" width="400" height="400"/></div>
+        <div class="member-body">
+          <h3 class="serif" style="margin-bottom:.1rem">${m.nome}</h3>
+          <p class="muted small" style="margin-bottom:.6rem">${m.ruolo}</p>
+          <p class="small">${m.bio}</p>
+          <p class="pill" style="margin-top:.8rem">${m.esperienza} di esperienza</p>
+        </div>
+      </div>`).join("");
+
     document.getElementById("revBox").innerHTML = S.recensioni.map((r,i)=>`
       <div class="review reveal d${(i%4)+1}">
-        <div class="stars">${"★".repeat(r.voto)}</div>
-        <p class="small">"${r.testo}"</p>
+        <div class="stars">${U.stars(r.voto)}</div>
+        <p class="small">«${r.testo}»</p>
         <div class="who">${r.nome}</div><div class="src">${r.fonte} · ${r.voto}/5</div>
       </div>`).join("");
   }

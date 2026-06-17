@@ -23,10 +23,11 @@
   }
 
   /* ── Helper toast ─────────────────────────────────────────────────── */
-  function toast(icon, text) {
+  // toast(text, type) — type: 'ok' | 'warn' | 'err'. Niente emoji: pallino colorato.
+  function toast(text, type) {
     let t = document.getElementById("toast");
-    if (!t) { t = document.createElement("div"); t.id = "toast"; t.className = "toast"; document.body.appendChild(t); }
-    t.innerHTML = `<span>${icon}</span><span>${text}</span>`;
+    if (!t) { t = document.createElement("div"); t.id = "toast"; t.className = "toast"; t.setAttribute("role", "status"); t.setAttribute("aria-live", "polite"); document.body.appendChild(t); }
+    t.innerHTML = `<span class="toast-dot ${"toast-" + (type || "ok")}"></span><span>${text}</span>`;
     t.classList.add("show");
     clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove("show"), 4500);
   }
@@ -164,13 +165,13 @@
       const g = id => (document.getElementById(id)?.value || "").trim();
       const name = g("bName"), email = g("bEmail"), phone = g("bPhone"), notes = g("bNotes");
       const consent = document.getElementById("bConsent")?.checked;
-      if (!name) return toast("⚠️", "Inserisci il tuo nome");
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return toast("⚠️", "Email non valida");
-      if (!this.date) return toast("⚠️", "Seleziona una data");
-      if (!this.time) return toast("⚠️", "Seleziona un orario");
-      if (S.recensioniAuto.consensoObbligatorio && !consent) return toast("⚠️", "Serve il consenso per procedere");
+      if (!name) return toast("Inserisci il tuo nome", "warn");
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return toast("Email non valida", "warn");
+      if (!this.date) return toast("Seleziona una data", "warn");
+      if (!this.time) return toast("Seleziona un orario", "warn");
+      if (S.recensioniAuto.consensoObbligatorio && !consent) return toast("Serve il consenso per procedere", "warn");
 
-      const btn = document.getElementById("submitBtn"); btn.disabled = true; const old = btn.textContent; btn.textContent = "⏳ Invio…";
+      const btn = document.getElementById("submitBtn"); btn.disabled = true; const old = btn.textContent; btn.textContent = "Invio in corso…";
       const token = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
       try {
         if (_sb) {
@@ -202,7 +203,7 @@
         this.showConfirm(apptStr, email);
         if (this.date) this.time = null, this.loadAvailability();
       } catch (err) {
-        console.error(err); toast("❌", "Errore. Chiama il " + S.contatti.telDisplay);
+        console.error(err); toast("Errore. Chiama il " + S.contatti.telDisplay, "err");
       } finally { btn.disabled = false; btn.textContent = old; }
     },
     async w3f(message, name, email) {
@@ -219,7 +220,7 @@
         <div class="bsum-row"><span class="k">Quando</span><span>${apptStr} · ${this.time}</span></div>
         <div class="bsum-row"><span class="k">Conferma a</span><span>${email}</span></div>`;
       m.classList.add("open");
-      toast("✉️", _sb ? "Prenotazione registrata!" : "Demo: prenotazione simulata");
+      toast(_sb ? "Prenotazione registrata!" : "Demo: prenotazione simulata", "ok");
     },
   };
 
@@ -240,10 +241,12 @@
       const ra = S.recensioniAuto;
       const qp = new URLSearchParams(location.search);
       const nome = qp.get("nome") || "";
-      const stars = [1, 2, 3, 4, 5].map(n => `<button class="star" data-v="${n}" aria-label="${n} stelle" style="background:none;border:none;font-size:2.6rem;cursor:pointer;color:var(--sabbia);width:auto;padding:0 .15rem;transition:color .2s">★</button>`).join("");
-      box.innerHTML = `<div id="starRow" style="margin:1rem 0 1.5rem">${stars}</div><div id="starResult"></div>`;
+      const starSvg = '<svg viewBox="0 0 24 24" width="42" height="42" fill="currentColor" stroke="currentColor" stroke-width="1"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.9 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg>';
+      const stars = [1, 2, 3, 4, 5].map(n => `<button class="star" data-v="${n}" aria-label="${n} stelle su 5" style="background:none;border:none;cursor:pointer;color:var(--sabbia);width:auto;padding:0 .2rem;line-height:0;transition:color .2s,transform .2s">${starSvg}</button>`).join("");
+      box.innerHTML = `<div id="starRow" style="margin:1.2rem 0 1.6rem;display:flex;justify-content:center">${stars}</div><div id="starResult"></div>`;
       const btns = box.querySelectorAll(".star");
-      const paint = v => btns.forEach(b => b.style.color = (+b.dataset.v <= v ? "var(--oro)" : "var(--sabbia)"));
+      const paint = v => btns.forEach(b => { const on = +b.dataset.v <= v; b.style.color = on ? "var(--rosa-dark)" : "var(--sabbia)"; b.style.transform = on ? "scale(1.08)" : "scale(1)"; });
+      box.querySelector("#starRow").onmouseleave = () => paint(0);
       btns.forEach(b => {
         b.onmouseenter = () => paint(+b.dataset.v);
         b.onclick = () => {
@@ -251,10 +254,10 @@
           const res = document.getElementById("starResult");
           if (v >= ra.sogliaStelle) {
             res.innerHTML = `<p class="lead mb1">${ra.messaggi.ringraziamentoPubblico.replace("{nome}", nome)}</p>
-              <a class="btn btn-primary" href="${this.googleUrl()}" target="_blank" rel="noopener">★ Lascia una recensione su Google</a>`;
+              <a class="btn btn-primary" href="${this.googleUrl()}" target="_blank" rel="noopener">Lascia una recensione su Google</a>`;
           } else {
             res.innerHTML = `<p class="lead mb1">${ra.messaggi.ringraziamentoPrivato.replace("{nome}", nome)}</p>
-              <a class="btn btn-outline" href="feedback.html${location.search}">Raccontaci cosa migliorare →</a>`;
+              <a class="btn btn-outline" href="feedback.html${location.search}">Raccontaci cosa migliorare</a>`;
           }
         };
       });
@@ -262,11 +265,11 @@
     async submitFeedback() {
       const txt = (document.getElementById("fbText")?.value || "").trim();
       const contact = (document.getElementById("fbContact")?.value || "").trim();
-      if (!txt) return toast("⚠️", "Scrivi qualche riga, grazie");
+      if (!txt) return toast("Scrivi qualche riga, grazie", "warn");
       const id = new URLSearchParams(location.search).get("id");
       if (_sb) { try { await _sb.from("feedback").insert([{ prenotazione_id: id || null, testo: txt, contatto: contact || null, created_at: new Date().toISOString() }]); } catch (e) { } }
       else if (I.web3formsKey && I.web3formsKey !== "YOUR_WEB3FORMS_KEY") { try { await Booking.w3f("FEEDBACK PRIVATO:\n\n" + txt + "\n\nContatto: " + (contact || "—"), "Cliente", S.contatti.email); } catch (e) { } }
-      document.getElementById("fbForm").innerHTML = `<div class="center"><div style="font-size:2.5rem">🤍</div><h3>Grazie del tuo riscontro</h3><p class="muted">Lo terremo a mente per migliorare. Ti ricontatteremo al più presto.</p></div>`;
+      document.getElementById("fbForm").innerHTML = `<div class="center"><div class="feature-ico" style="margin:0 auto 1rem">${SITEUI.icon("heart","ico")}</div><h3>Grazie del tuo riscontro</h3><p class="muted">Lo terremo a mente per migliorare. Ti ricontatteremo al più presto.</p></div>`;
     },
   };
 

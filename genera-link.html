@@ -37,7 +37,7 @@
       <button class="btn btn-primary" style="padding:.4rem .8rem;font-size:.6rem" onclick="copia()" id="copyBtn">Copia</button>
     </div>
     <a class="btn btn-wa" id="waBtn" style="width:100%;justify-content:center" target="_blank" rel="noopener">Apri in WhatsApp</a>
-    <a class="btn btn-outline mt1" id="prevBtn" style="width:100%;justify-content:center" target="_blank">↗ Anteprima sito</a>
+    <a class="btn btn-outline mt1" id="prevBtn" style="width:100%;justify-content:center" target="_blank">Anteprima sito</a>
   </div>
 </div>
 
@@ -57,11 +57,11 @@ function agg(){
   document.getElementById("linkText").textContent=link;
   document.getElementById("prevBtn").href=link;
   const nome=v("g_nome");
-  const msg=`Ciao! Ho visto ${nome} su Google 👏\n\nQuanto tempo passate al telefono per fissare gli appuntamenti? Con un sito così le clienti prenotano da sole, ricevono conferma e promemoria automatici — e dopo il trattamento parte da sola la richiesta di recensione su Google ⭐\n\nHo già preparato una demo col vostro nome 👇\n\n${link.replace(/&/g,"%26")}\n\nVi va se ne parliamo 5 minuti?`;
+  const msg=`Ciao! Ho visto ${nome} su Google\n\nQuanto tempo passate al telefono per fissare gli appuntamenti? Con un sito così le clienti prenotano da sole, ricevono conferma e promemoria automatici — e dopo il trattamento parte da sola la richiesta di recensione su Google\n\nHo già preparato una demo col vostro nome\n\n${link.replace(/&/g,"%26")}\n\nVi va se ne parliamo 5 minuti?`;
   document.getElementById("waBtn").href="https://wa.me/?text="+encodeURIComponent(msg);
   document.getElementById("copyBtn").textContent="Copia";
 }
-function copia(){ navigator.clipboard.writeText(document.getElementById("linkText").textContent).then(()=>{ const b=document.getElementById("copyBtn"); b.textContent="✓"; setTimeout(()=>b.textContent="Copia",1500); }); }
+function copia(){ navigator.clipboard.writeText(document.getElementById("linkText").textContent).then(()=>{ const b=document.getElementById("copyBtn"); b.textContent="Copiato!"; setTimeout(()=>b.textContent="Copia",1600); }); }
 </script>
 </body>
 </html>

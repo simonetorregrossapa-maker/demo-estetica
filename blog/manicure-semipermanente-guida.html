@@ -18,6 +18,7 @@
     <p class="muted">Tempo di lettura: 4 min · a cura delle estetiste di Bellezza Studio</p>
   </div>
 </section>
+<section class="bg-crema" style="padding-bottom:0"><div class="container"><div class="article-cover"><img id="cover" alt="" loading="lazy"/></div></div></section>
 <section class="bg-crema">
   <div class="container prose">
     <p class="lead">Lo smalto semipermanente è amatissimo per la sua tenuta e l'effetto sempre curato. Ma come funziona, quanto dura e come prendersene cura per non rovinare le unghie? Vediamolo insieme.</p>
@@ -54,7 +55,8 @@ SITEUI.mount({ active:"blog/index.html", base:"../",
   schema:[{ "@context":"https://schema.org","@type":"Article",
     headline:"Manicure semipermanente: la guida completa",
     author:{"@type":"Organization",name:SITE.brand.nome},
-    publisher:{"@type":"Organization",name:SITE.brand.nome} }]
+    publisher:{"@type":"Organization",name:SITE.brand.nome} }],
+  onReady(){ document.getElementById("cover").src = SITEUI.photo(SITE.media.blog[2],1200,520); }
 });
 </script>
 </body>
