@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Pagine interne / di servizio fuori dall'indice
+Disallow: /dashboard.html
+Disallow: /genera-link.html
+Disallow: /recensione.html
+Disallow: /feedback.html
+Disallow: /annulla.html
+
+# AGGIORNA con il dominio reale (config.js → seo.dominio)
+Sitemap: https://bellezzastudio.it/sitemap.xml

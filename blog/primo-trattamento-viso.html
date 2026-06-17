@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../styles.css"/>
+<script src="../config.js"></script><script src="../components.js"></script><script src="../app.js"></script>
+</head>
+<body>
+<article>
+<section class="bg-crema-2" style="padding-bottom:2rem">
+  <div class="container prose">
+    <div class="breadcrumb"><a href="../index.html">Home</a> › <a href="index.html">Blog</a> › Primo trattamento viso</div>
+    <span class="pill">Skincare</span>
+    <h1 class="serif" style="margin-top:.6rem">Come prepararti al primo trattamento viso</h1>
+    <p class="muted">Tempo di lettura: 4 min · a cura delle estetiste di Bellezza Studio</p>
+  </div>
+</section>
+<section class="bg-crema">
+  <div class="container prose">
+    <p class="lead">Il primo trattamento viso è un piccolo investimento sulla tua pelle. Con qualche accortezza nei giorni precedenti, i risultati saranno migliori e più duraturi. Ecco tutto quello che ti serve sapere.</p>
+
+    <h2 class="serif">Nei giorni prima</h2>
+    <p>Evita scrub aggressivi, acidi esfolianti (AHA/BHA) e retinoidi nelle 48 ore precedenti: la pelle dev'essere integra, non già stressata. Se fai la ceretta o l'epilazione sul viso, falla qualche giorno prima, non lo stesso giorno. Bevi acqua a sufficienza: una pelle idratata risponde meglio.</p>
+
+    <h2 class="serif">Il giorno dell'appuntamento</h2>
+    <p>Se puoi, presentati con il viso struccato — ma non preoccuparti se arrivi dal lavoro: la prima cosa che faremo sarà una detersione accurata. Porta con te (o segnala) i prodotti che usi abitualmente e qualsiasi reazione o allergia che hai notato in passato.</p>
+    <ul>
+      <li>Evita di esporti al sole intensamente subito prima e subito dopo.</li>
+      <li>Indica se usi farmaci fotosensibilizzanti o se sei in gravidanza.</li>
+      <li>Concediti qualche minuto di anticipo per rilassarti.</li>
+    </ul>
+
+    <h2 class="serif">Cosa aspettarti</h2>
+    <p>Un buon trattamento parte sempre dall'<strong>analisi della pelle</strong>: capiamo se è secca, grassa, mista o sensibile, e costruiamo il protocollo su misura. Seguono detersione, esfoliazione, eventuale estrazione dei comedoni, una maschera mirata e la fase finale di idratazione e protezione. È normale un leggero rossore subito dopo: sparisce in poche ore.</p>
+
+    <h2 class="serif">Dopo il trattamento</h2>
+    <p>Per 24 ore evita make-up pesante, sauna, piscina e sole diretto. Usa una protezione solare ogni giorno: è il gesto che più di tutti mantiene i risultati. E ricorda che la pelle migliora con la costanza: un percorso regolare batte sempre il trattamento spot.</p>
+
+    <div class="card mt2" style="background:var(--crema-2)">
+      <h3 class="serif">Pronta a iniziare?</h3>
+      <p class="muted mb1">Prenota una pulizia viso profonda o una consulenza personalizzata.</p>
+      <a class="btn btn-primary" href="../prenota.html?trattamento=Pulizia%20viso%20profonda">Prenota il tuo trattamento viso</a>
+    </div>
+    <p class="mt2"><a href="index.html" class="price">← Torna al blog</a></p>
+  </div>
+</section>
+</article>
+<script>
+SITEUI.mount({ active:"blog/index.html", base:"../",
+  title:"Come prepararti al primo trattamento viso",
+  description:"Guida pratica al primo trattamento viso: come preparare la pelle, cosa aspettarti e come far durare i risultati.",
+  schema:[{ "@context":"https://schema.org","@type":"Article",
+    headline:"Come prepararti al primo trattamento viso",
+    author:{"@type":"Organization",name:SITE.brand.nome},
+    publisher:{"@type":"Organization",name:SITE.brand.nome} }]
+});
+</script>
+</body>
+</html>

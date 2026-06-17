@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css"/>
+<script src="config.js"></script><script src="components.js"></script><script src="app.js"></script>
+</head>
+<body>
+<section class="bg-crema-2" style="padding-bottom:2.5rem">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> › Il Centro</div>
+    <div class="eyebrow">Il nostro centro</div>
+    <h1 class="serif">Un luogo pensato per <span class="italic">farti stare bene</span></h1>
+  </div>
+</section>
+
+<section class="bg-crema">
+  <div class="container grid-2">
+    <div class="reveal">
+      <div class="gallery" style="grid-template-columns:1fr 1fr"><div class="g-item" data-label="La reception"><div class="ph">✦</div></div><div class="g-item" data-label="Cabina viso"><div class="ph">✺</div></div><div class="g-item" data-label="Area relax"><div class="ph">❀</div></div><div class="g-item" data-label="Dettagli"><div class="ph">❋</div></div></div>
+    </div>
+    <div class="reveal d1">
+      <div class="eyebrow">La nostra storia</div>
+      <h2 class="serif" id="storiaTitle"></h2>
+      <p class="lead mt1" id="storiaP1"></p>
+      <p class="mt1" id="storiaP2"></p>
+    </div>
+  </div>
+</section>
+
+<section class="bg-crema-2">
+  <div class="container">
+    <div class="center" style="margin-bottom:3rem"><div class="eyebrow" style="justify-content:center">I valori</div><h2 class="serif">In cosa <span class="italic">crediamo</span></h2></div>
+    <div class="grid-3">
+      <div class="card reveal"><div class="cat-ico">🤍</div><h3 class="serif" style="margin:.5rem 0">Cura della persona</h3><p class="muted">Ti ascoltiamo prima di ogni trattamento. La tua pelle e il tuo benessere vengono prima di tutto.</p></div>
+      <div class="card reveal d1"><div class="cat-ico">🧼</div><h3 class="serif" style="margin:.5rem 0">Igiene e sicurezza</h3><p class="muted">Protocolli rigorosi, sterilizzazione e materiale monouso. Un ambiente in cui sentirti al sicuro.</p></div>
+      <div class="card reveal d2"><div class="cat-ico">🌿</div><h3 class="serif" style="margin:.5rem 0">Qualità senza compromessi</h3><p class="muted">Solo prodotti professionali e tecniche aggiornate, per risultati che si vedono e durano.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="bg-crema">
+  <div class="container">
+    <div class="center" style="margin-bottom:3rem"><div class="eyebrow" style="justify-content:center">Il team</div><h2 class="serif">Le persone che <span class="italic">ti accolgono</span></h2></div>
+    <div class="grid-3" id="teamBox"></div>
+  </div>
+</section>
+
+<section class="bg-salvia center"><div class="container"><h2 class="serif">Vieni a trovarci</h2><p class="lead mt1" style="opacity:.92">Prenota il tuo primo trattamento e scopri la differenza.</p><div class="mt2"><a class="btn btn-light" href="prenota.html">✦ Prenota ora</a></div></div></section>
+
+<script>
+SITEUI.mount({
+  active:"chi-siamo.html", title:"Il Centro",
+  description:"La storia, la filosofia e il team di Bellezza Studio. Estetiste qualificate, igiene certificata e prodotti professionali.",
+  onReady(){
+    const S=SITE;
+    document.getElementById("storiaTitle").innerHTML = `${S.brand.anniAttivita} anni dedicati alla <span class="italic">tua bellezza</span>`;
+    document.getElementById("storiaP1").textContent = `${S.brand.nome} nasce dalla passione per il benessere e la cura della persona. Dal ${S.legal.annoInizio} accogliamo le nostre clienti in uno spazio pensato per rallentare, prendersi cura di sé e ritrovare equilibrio.`;
+    document.getElementById("storiaP2").textContent = `Nel quartiere ${S.brand.quartiere} di ${S.brand.citta}, siamo diventate un punto di riferimento per chi cerca trattamenti efficaci e un'esperienza autentica, fatta di ascolto, competenza e prodotti selezionati.`;
+    document.getElementById("teamBox").innerHTML = S.team.map((m,i)=>`
+      <div class="card reveal d${(i%3)+1}">
+        <div class="av" style="width:64px;height:64px;font-size:1.8rem;margin:0 auto">${m.nome[0]}</div>
+        <h3 class="serif center" style="margin:.6rem 0 .2rem">${m.nome}</h3>
+        <p class="muted center small">${m.ruolo}</p>
+        <p class="small center mt1">${m.bio}</p>
+        <p class="pill" style="display:block;width:max-content;margin:.8rem auto 0">${m.spec}</p>
+      </div>`).join("");
+  }
+});
+</script>
+</body>
+</html>

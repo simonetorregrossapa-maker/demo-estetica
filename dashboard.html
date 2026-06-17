@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="robots" content="noindex"/>
+<title>Dashboard Recensioni</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css"/>
+<script async src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script><script src="components.js"></script><script src="app.js"></script>
+</head>
+<body>
+<!-- DASHBOARD RECENSIONI (area gestione del titolare).
+     Mostra: richieste inviate, tasso risposta, valutazioni, recensioni pubbliche,
+     feedback privati. + Generatore QR/link per la raccolta in sede. -->
+<section class="bg-crema-2" style="padding-bottom:1.5rem">
+  <div class="container">
+    <div class="eyebrow">Area gestione · solo titolare</div>
+    <h1 class="serif">Dashboard <span class="italic">recensioni</span></h1>
+    <p class="muted" id="modeNote"></p>
+  </div>
+</section>
+
+<section class="bg-crema" style="padding-top:1.5rem">
+  <div class="container">
+    <div class="grid-4" id="stats"></div>
+
+    <div class="grid-2 mt2" style="align-items:start;margin-top:2.5rem">
+      <!-- Feedback privati -->
+      <div>
+        <h3 class="serif mb1">Feedback privati ricevuti</h3>
+        <div id="fbList"></div>
+      </div>
+      <!-- QR / link in sede -->
+      <div>
+        <h3 class="serif mb1">Raccogli recensioni in sede</h3>
+        <div class="card center">
+          <p class="muted small mb1">Esponi questo QR alla reception: la cliente lo inquadra, passa dal filtro intelligente e — se soddisfatta — va su Google.</p>
+          <img id="qr" alt="QR recensioni" width="180" height="180" style="margin:0 auto;background:#fff;padding:8px;border-radius:8px"/>
+          <div class="link-box card" style="margin-top:1rem;display:flex;gap:.6rem;align-items:center;background:var(--crema-2)">
+            <span id="shortLink" class="small" style="flex:1;word-break:break-all;color:var(--rosa-dark)"></span>
+            <button class="btn btn-primary" style="padding:.4rem .8rem;font-size:.6rem" id="copyLink">Copia</button>
+          </div>
+          <a class="btn btn-outline mt1" id="dlQr" download="qr-recensioni.png">Scarica QR</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt2" style="margin-top:2.5rem;background:var(--crema-2)">
+      <h3 class="serif mb1">Come funziona il sistema automatico</h3>
+      <ul class="muted" style="margin-left:1.2rem;line-height:1.9">
+        <li><strong>Trigger automatico:</strong> a {ORE} ore dall'appuntamento completato, parte la richiesta via {CANALE}.</li>
+        <li><strong>Filtro intelligente:</strong> voto ≥ {SOGLIA}★ → recensione Google · voto &lt; {SOGLIA}★ → feedback privato.</li>
+        <li><strong>GDPR:</strong> invio solo con consenso esplicito raccolto in prenotazione, con opt-out.</li>
+        <li>Tutti i parametri sono in <code>config.js → recensioniAuto</code>.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<script>
+SITEUI.mount({ active:null,
+  async onReady(){
+    const S=SITE, ra=S.recensioniAuto, sb=SITEAPP.getClient();
+    const reviewUrl = `${location.origin}${location.pathname.replace(/[^/]*$/,'')}recensione.html`;
+    // QR + link in sede
+    document.getElementById("qr").src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(reviewUrl)}`;
+    document.getElementById("dlQr").href = document.getElementById("qr").src;
+    document.getElementById("shortLink").textContent = reviewUrl;
+    document.getElementById("copyLink").onclick = ()=>{ navigator.clipboard.writeText(reviewUrl); SITEAPP.toast("✓","Link copiato"); };
+
+    // testo "come funziona" con valori reali
+    document.querySelector('.card.mt2 ul').innerHTML = document.querySelector('.card.mt2 ul').innerHTML
+      .replace("{ORE}",ra.oreAttesa).replace(/\{CANALE\}/g,ra.canale).replace(/\{SOGLIA\}/g,ra.sogliaStelle);
+
+    // Statistiche + feedback: reali da Supabase, oppure demo
+    let stats, feedbacks;
+    if(sb){
+      document.getElementById("modeNote").textContent = "Dati in tempo reale da Supabase.";
+      const { data:pre } = await sb.from("prenotazioni").select("recensione_inviata,stato");
+      const { data:fb } = await sb.from("feedback").select("*").order("created_at",{ascending:false});
+      const inviate=(pre||[]).filter(p=>p.recensione_inviata).length;
+      const completate=(pre||[]).filter(p=>p.stato!=="cancellata").length;
+      feedbacks=fb||[];
+      stats=[["Richieste inviate",inviate],["Appuntamenti",completate],["Feedback privati",feedbacks.length],["Media Google","4,9★"]];
+    } else {
+      document.getElementById("modeNote").textContent = "Modalità demo (Supabase non configurato): dati di esempio.";
+      feedbacks=[{testo:"Tempo di attesa un po' lungo all'arrivo, per il resto bene.",created_at:"2026-06-14"},{testo:"Avrei gradito più spiegazioni sul trattamento.",created_at:"2026-06-10"}];
+      stats=[["Richieste inviate","124"],["Tasso risposta","41%"],["Recensioni Google","+38"],["Feedback privati","6"]];
+    }
+    document.getElementById("stats").innerHTML = stats.map(([l,v])=>`<div class="card center"><div class="stat"><div class="v">${v}</div><div class="l">${l}</div></div></div>`).join("");
+    document.getElementById("fbList").innerHTML = feedbacks.length
+      ? feedbacks.map(f=>`<div class="card" style="margin-bottom:.8rem"><p class="small">"${f.testo}"</p><p class="muted small mt1">${(f.created_at||"").slice(0,10)}${f.contatto?" · "+f.contatto:""}</p></div>`).join("")
+      : `<p class="muted">Nessun feedback privato ricevuto. Ottimo segno! 🌟</p>`;
+  }
+});
+</script>
+</body>
+</html>

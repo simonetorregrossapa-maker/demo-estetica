@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css"/>
+<!-- Backend prenotazioni & email (caricano solo se configurati in config.js) -->
+<script async src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script async src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script src="config.js"></script>
+<script src="components.js"></script>
+<script src="app.js"></script>
+</head>
+<body>
+
+<section class="bg-crema" style="padding-bottom:1.5rem">
+  <div class="container center">
+    <div class="eyebrow" style="justify-content:center">Prenotazione online</div>
+    <h1 class="serif">Prenota il tuo <span class="italic">momento di bellezza</span></h1>
+    <p class="lead" style="max-width:48ch;margin:.8rem auto 0">Scegli il trattamento, l'operatrice e l'orario. Riceverai conferma immediata via email.</p>
+    <p class="hero-micro" style="justify-content:center;margin-top:1rem"><span>✓ Conferma immediata</span><span>✓ Promemoria automatico</span><span>✓ Disdici fino a 24h prima</span></p>
+  </div>
+</section>
+
+<section class="bg-crema" style="padding-top:1rem">
+  <div class="container book-grid">
+    <!-- COLONNA SCELTE -->
+    <div class="book-card">
+      <div class="step-label"><span class="n">1</span> Scegli il trattamento</div>
+      <select id="svcSelect" aria-label="Trattamento"></select>
+
+      <div class="step-label"><span class="n">2</span> Scegli l'operatrice</div>
+      <div class="op-row" id="opSelect"></div>
+
+      <div class="step-label"><span class="n">3</span> Scegli il giorno</div>
+      <div class="cal-head">
+        <button type="button" onclick="Booking.changeMonth(-1)" aria-label="Mese precedente">‹</button>
+        <span class="cal-label" id="calLabel"></span>
+        <button type="button" onclick="Booking.changeMonth(1)" aria-label="Mese successivo">›</button>
+      </div>
+      <div class="cal-dow"><span>Lun</span><span>Mar</span><span>Mer</span><span>Gio</span><span>Ven</span><span>Sab</span><span>Dom</span></div>
+      <div class="cal-grid" id="calGrid"></div>
+
+      <div class="step-label"><span class="n">4</span> Scegli l'orario</div>
+      <div class="time-grid" id="timeGrid"><p class="hint">Seleziona una data per vedere gli orari</p></div>
+    </div>
+
+    <!-- COLONNA RIEPILOGO + DATI -->
+    <div class="book-card">
+      <h3 class="serif" style="margin-bottom:.4rem">Riepilogo</h3>
+      <div class="bsum" id="bookSummary"></div>
+
+      <h3 class="serif" style="margin:1.2rem 0 .8rem">I tuoi dati</h3>
+      <div class="fld-row"><label class="fld" for="bName">Nome e cognome *</label><input id="bName" autocomplete="name" placeholder="Es. Maria Bianchi"/></div>
+      <div class="fld-row"><label class="fld" for="bEmail">Email *</label><input id="bEmail" type="email" autocomplete="email" placeholder="maria@email.it"/></div>
+      <div class="fld-row"><label class="fld" for="bPhone">Telefono</label><input id="bPhone" type="tel" autocomplete="tel" placeholder="+39 333 1234567"/></div>
+      <div class="fld-row"><label class="fld" for="bNotes">Note (facoltativo)</label><textarea id="bNotes" rows="2" placeholder="Allergie, preferenze, richieste…"></textarea></div>
+      <label class="consent fld-row"><input type="checkbox" id="bConsent"/><span>Acconsento al trattamento dei dati per gestire la prenotazione e ricevere conferma/promemoria. <a href="privacy.html">Privacy</a>.</span></label>
+
+      <button class="btn btn-primary" id="submitBtn" style="width:100%;justify-content:center" onclick="Booking.submit()">✦ Conferma prenotazione</button>
+      <p class="muted center small mt1">Nessun pagamento anticipato richiesto.</p>
+    </div>
+  </div>
+</section>
+
+<!-- MODALE CONFERMA -->
+<div class="modal" id="confirmModal">
+  <div class="modal-card">
+    <div style="font-size:2.6rem">🌸</div>
+    <h2 class="serif" style="margin:.4rem 0">Prenotazione confermata</h2>
+    <p class="muted">Ti abbiamo inviato il riepilogo via email.</p>
+    <div class="bsum" id="confSummary"></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="document.getElementById('confirmModal').classList.remove('open')">Perfetto, grazie!</button>
+  </div>
+</div>
+
+<script>
+SITEUI.mount({
+  active: "prenota.html",
+  title: "Prenota online",
+  description: "Prenota online il tuo trattamento di bellezza: scegli operatrice, giorno e orario. Conferma immediata.",
+  onReady() { Booking.init(); }
+});
+</script>
+</body>
+</html>

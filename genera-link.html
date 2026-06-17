@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="robots" content="noindex"/>
+<title>Genera Link Demo — Bellezza Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css"/>
+<script src="config.js"></script>
+</head>
+<body style="background:var(--crema-2);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem 1rem">
+<!-- STRUMENTO COMMERCIALE: genera un link demo personalizzato col nome del
+     potenziale cliente (i parametri URL ribrandizzano il sito al volo) e lo
+     invia su WhatsApp. Stessa logica del sito barbieri. -->
+<div class="card" style="max-width:540px;width:100%">
+  <div class="eyebrow">Strumento commerciale</div>
+  <h2 class="serif" style="margin-bottom:.3rem">Genera link demo personalizzato</h2>
+  <p class="muted small mb1">Compila i campi: il link si aggiorna in tempo reale.</p>
+
+  <div class="fld-row"><label class="fld">Nome centro estetico *</label><input id="g_nome" placeholder="es. Estetica Aurora" oninput="agg()"/></div>
+  <div class="grid-2" style="gap:1rem">
+    <div class="fld-row"><label class="fld">Città</label><input id="g_citta" placeholder="es. Catania" oninput="agg()"/></div>
+    <div class="fld-row"><label class="fld">Quartiere</label><input id="g_quartiere" placeholder="es. Borgo" oninput="agg()"/></div>
+  </div>
+  <div class="fld-row"><label class="fld">Indirizzo</label><input id="g_indirizzo" placeholder="es. Via Etnea 100" oninput="agg()"/></div>
+  <div class="grid-2" style="gap:1rem">
+    <div class="fld-row"><label class="fld">CAP</label><input id="g_cap" placeholder="es. 95131" oninput="agg()"/></div>
+    <div class="fld-row"><label class="fld">Telefono (senza +39)</label><input id="g_tel" placeholder="es. 095 1234567" oninput="agg()"/></div>
+  </div>
+
+  <div class="card" id="result" style="display:none;background:var(--crema-2);border-left:3px solid var(--rosa)">
+    <p class="fld" style="margin-bottom:.5rem">Link personalizzato</p>
+    <div style="display:flex;gap:.6rem;align-items:center;background:#fff;padding:.6rem .8rem;border-radius:4px;margin-bottom:.8rem">
+      <span id="linkText" class="small" style="flex:1;word-break:break-all;color:var(--rosa-dark)"></span>
+      <button class="btn btn-primary" style="padding:.4rem .8rem;font-size:.6rem" onclick="copia()" id="copyBtn">Copia</button>
+    </div>
+    <a class="btn btn-wa" id="waBtn" style="width:100%;justify-content:center" target="_blank" rel="noopener">Apri in WhatsApp</a>
+    <a class="btn btn-outline mt1" id="prevBtn" style="width:100%;justify-content:center" target="_blank">↗ Anteprima sito</a>
+  </div>
+</div>
+
+<script>
+const BASE = location.origin + location.pathname.replace(/genera-link\.html$/, "index.html");
+function v(id){ return document.getElementById(id).value.trim(); }
+function buildLink(){
+  if(!v("g_nome")) return null;
+  const p=new URLSearchParams();
+  p.set("nome", v("g_nome"));
+  ["citta","quartiere","indirizzo","cap","tel"].forEach(k=>{ if(v("g_"+k)) p.set(k, v("g_"+k)); });
+  return BASE + "?" + p.toString();
+}
+function agg(){
+  const link=buildLink(); if(!link){ document.getElementById("result").style.display="none"; return; }
+  document.getElementById("result").style.display="block";
+  document.getElementById("linkText").textContent=link;
+  document.getElementById("prevBtn").href=link;
+  const nome=v("g_nome");
+  const msg=`Ciao! Ho visto ${nome} su Google 👏\n\nQuanto tempo passate al telefono per fissare gli appuntamenti? Con un sito così le clienti prenotano da sole, ricevono conferma e promemoria automatici — e dopo il trattamento parte da sola la richiesta di recensione su Google ⭐\n\nHo già preparato una demo col vostro nome 👇\n\n${link.replace(/&/g,"%26")}\n\nVi va se ne parliamo 5 minuti?`;
+  document.getElementById("waBtn").href="https://wa.me/?text="+encodeURIComponent(msg);
+  document.getElementById("copyBtn").textContent="Copia";
+}
+function copia(){ navigator.clipboard.writeText(document.getElementById("linkText").textContent).then(()=>{ const b=document.getElementById("copyBtn"); b.textContent="✓"; setTimeout(()=>b.textContent="Copia",1500); }); }
+</script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css"/>
+<script src="config.js"></script>
+<script src="components.js"></script>
+<script src="app.js"></script>
+</head>
+<body>
+
+<section class="bg-crema-2" style="padding-bottom:2.5rem">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> › Trattamenti</div>
+    <div class="eyebrow">Listino trattamenti</div>
+    <h1 class="serif">Trattamenti viso, corpo & <span class="italic">benessere</span></h1>
+    <p class="lead" style="max-width:60ch;margin-top:.8rem">Ogni trattamento inizia con un'analisi della tua pelle e dei tuoi obiettivi. Prezzi trasparenti, durata indicata, prodotti professionali. Prenoti in pochi tocchi.</p>
+    <div class="chip-row mt2" id="catNav"></div>
+  </div>
+</section>
+
+<section class="bg-crema" style="padding-top:1.5rem"><div class="container" id="catSections"></div></section>
+
+<section class="bg-salvia center">
+  <div class="container">
+    <h2 class="serif">Non sai quale scegliere?</h2>
+    <p class="lead mt1" style="opacity:.92;max-width:46ch;margin-inline:auto">Prenota una consulenza gratuita: analizziamo la tua pelle e costruiamo il percorso giusto per te.</p>
+    <div class="mt2"><a class="btn btn-light" href="prenota.html">Prenota una consulenza</a></div>
+  </div>
+</section>
+
+<script>
+SITEUI.mount({
+  active: "trattamenti.html",
+  title: "Trattamenti & Prezzi",
+  description: "Listino completo dei trattamenti: viso, corpo, epilazione, mani e piedi, massaggi. Durata e prezzi trasparenti. Prenota online.",
+  schema: SITE.categorie.flatMap(c => c.trattamenti.map(t => ({
+    "@context":"https://schema.org","@type":"Service", name: t.nome, serviceType: c.nome,
+    provider: { "@type":"BeautySalon", name: SITE.brand.nome },
+    areaServed: SITE.brand.citta, description: t.descr,
+    offers: { "@type":"Offer", price: t.prezzo, priceCurrency:"EUR" }
+  }))),
+  onReady() {
+    const S = SITE;
+    document.getElementById("catNav").innerHTML = S.categorie.map(c=>`<a class="chip" href="#${c.id}">${c.icona} ${c.nome}</a>`).join("");
+    document.getElementById("catSections").innerHTML = S.categorie.map(c=>`
+      <div id="${c.id}" style="margin-bottom:3.2rem;scroll-margin-top:90px" class="reveal">
+        <div style="display:flex;align-items:baseline;gap:.8rem;border-bottom:2px solid var(--sabbia);padding-bottom:.8rem;margin-bottom:1rem">
+          <span class="cat-ico">${c.icona}</span><h2 class="serif">${c.nome}</h2>
+        </div>
+        <p class="muted mb1">${c.descr}</p>
+        ${c.trattamenti.map(t=>`
+          <div class="treat">
+            <div>
+              <strong>${t.nome}</strong>
+              <div class="t-meta">${t.descr}</div>
+              <div class="t-meta">⏱ ${t.durata} min</div>
+            </div>
+            <div style="text-align:right;display:flex;flex-direction:column;gap:.5rem;align-items:flex-end">
+              <span class="t-price">${t.prezzo}€</span>
+              <a class="btn btn-primary" style="padding:.5rem 1rem;font-size:.62rem" href="prenota.html?trattamento=${encodeURIComponent(t.nome)}">Prenota</a>
+            </div>
+          </div>`).join("")}
+      </div>`).join("");
+  }
+});
+</script>
+</body>
+</html>

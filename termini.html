@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css"/>
+<script src="config.js"></script><script src="components.js"></script><script src="app.js"></script>
+</head>
+<body>
+<section class="bg-crema">
+  <div class="container prose">
+    <div class="breadcrumb"><a href="index.html">Home</a> › Termini di prenotazione</div>
+    <h1 class="serif">Termini di prenotazione</h1>
+    <div id="body"></div>
+  </div>
+</section>
+<script>
+SITEUI.mount({ active:null, title:"Termini di prenotazione", description:"Condizioni di prenotazione, disdetta e ritardi di Bellezza Studio.",
+  onReady(){
+    const S=SITE;
+    document.getElementById("body").innerHTML=`
+      <h2 class="serif">Prenotazione</h2>
+      <p>La prenotazione tramite il sito è una richiesta di appuntamento. Riceverai una conferma via email con il riepilogo. Ti chiediamo di fornire dati corretti per poterti ricontattare.</p>
+      <h2 class="serif">Disdetta e modifica</h2>
+      <p>Puoi disdire o spostare gratuitamente fino a <strong>24 ore</strong> prima dell'appuntamento, tramite il link presente nell'email di conferma o telefonando al ${S.contatti.telDisplay}. Disdette tardive o mancate presentazioni ripetute possono comportare la richiesta di un acconto per le prenotazioni successive.</p>
+      <h2 class="serif">Ritardi</h2>
+      <p>In caso di ritardo il trattamento potrà essere ridotto per non penalizzare le clienti successive, mantenendo il prezzo pieno. Oltre 15 minuti di ritardo l'appuntamento potrebbe essere riprogrammato.</p>
+      <h2 class="serif">Acconti</h2>
+      <p>Per alcuni percorsi o trattamenti di lunga durata può essere richiesto un acconto a conferma, che verrà scalato dal totale. L'eventuale importo ti sarà comunicato chiaramente.</p>
+      <h2 class="serif">Salute e sicurezza</h2>
+      <p>Ti invitiamo a segnalare allergie, patologie, gravidanza o terapie in corso: alcuni trattamenti possono essere controindicati. Ci riserviamo di rimandare un trattamento per la tua sicurezza.</p>
+      <p class="muted small mt2">Documento fac-simile da adattare alle condizioni reali del centro.</p>`;
+  }
+});
+</script>
+</body>
+</html>

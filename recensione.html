@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="robots" content="noindex"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css"/>
+<script async src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script><script src="components.js"></script><script src="app.js"></script>
+</head>
+<body>
+<!-- Landing del SISTEMA RECENSIONI AUTOMATICHE.
+     Arrivano qui sia il link via email/SMS/WhatsApp sia il QR code in sede.
+     SMART ROUTING: voto >= soglia → recensione Google ; voto < soglia → feedback privato. -->
+<section class="hero" style="min-height:100vh">
+  <div class="hero-bg"></div><div class="hero-blob a"></div><div class="hero-blob b"></div>
+  <div class="hero-inner center" style="max-width:640px;margin-inline:auto">
+    <div class="eyebrow" style="justify-content:center" id="eyebrow">La tua opinione conta</div>
+    <h1 class="serif" id="hi">Com'è andata?</h1>
+    <p class="lead" id="sub" style="max-width:42ch;margin:.6rem auto 0"></p>
+    <div id="starGate"></div>
+  </div>
+</section>
+
+<script>
+SITEUI.mount({
+  active:null, title:"Lascia una recensione",
+  onReady(){
+    const S=SITE, nome=new URLSearchParams(location.search).get("nome")||"";
+    document.getElementById("hi").innerHTML = nome ? `Ciao ${nome}, <span class="italic">com'è andata?</span>` : `Com'è <span class="italic">andata?</span>`;
+    document.getElementById("sub").textContent = `Tocca le stelle per dirci quanto sei stata bene da ${S.brand.nome}.`;
+    Reviews.initStarGate("starGate");
+  }
+});
+</script>
+</body>
+</html>

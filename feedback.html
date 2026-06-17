@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="robots" content="noindex"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css"/>
+<script async src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script><script src="components.js"></script><script src="app.js"></script>
+</head>
+<body>
+<!-- FEEDBACK PRIVATO — destinazione dei voti sotto soglia (protegge le stelle pubbliche). -->
+<section class="hero" style="min-height:100vh">
+  <div class="hero-bg"></div><div class="hero-blob b"></div>
+  <div class="hero-inner" style="max-width:560px;margin-inline:auto">
+    <div id="fbForm">
+      <div class="eyebrow">Ci dispiace</div>
+      <h1 class="serif">Aiutaci a <span class="italic">rimediare</span></h1>
+      <p class="lead" id="fbSub" style="margin:.6rem 0 1.4rem"></p>
+      <div class="card">
+        <div class="fld-row"><label class="fld" for="fbText">Cosa possiamo migliorare?</label><textarea id="fbText" rows="5" placeholder="Raccontaci con sincerità cosa non è andato…"></textarea></div>
+        <div class="fld-row"><label class="fld" for="fbContact">Email o telefono (facoltativo)</label><input id="fbContact" placeholder="Se vuoi essere ricontattata"/></div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="Reviews.submitFeedback()">Invia in privato</button>
+        <p class="muted small center mt1">Questo messaggio arriva solo alla titolare. Non viene pubblicato.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+SITEUI.mount({ active:null, title:"Feedback privato",
+  onReady(){ const nome=new URLSearchParams(location.search).get("nome")||"";
+    document.getElementById("fbSub").textContent = (nome?nome+", ":"")+"il tuo riscontro resta tra noi e ci aiuta davvero a fare meglio. Grazie per il tempo che ci dedichi."; }
+});
+</script>
+</body>
+</html>

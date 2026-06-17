@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../styles.css"/>
+<script src="../config.js"></script><script src="../components.js"></script><script src="../app.js"></script>
+</head>
+<body>
+<article>
+<section class="bg-crema-2" style="padding-bottom:2rem">
+  <div class="container prose">
+    <div class="breadcrumb"><a href="../index.html">Home</a> › <a href="index.html">Blog</a> › Manicure semipermanente</div>
+    <span class="pill">Mani & Piedi</span>
+    <h1 class="serif" style="margin-top:.6rem">Manicure semipermanente: la guida completa</h1>
+    <p class="muted">Tempo di lettura: 4 min · a cura delle estetiste di Bellezza Studio</p>
+  </div>
+</section>
+<section class="bg-crema">
+  <div class="container prose">
+    <p class="lead">Lo smalto semipermanente è amatissimo per la sua tenuta e l'effetto sempre curato. Ma come funziona, quanto dura e come prendersene cura per non rovinare le unghie? Vediamolo insieme.</p>
+
+    <h2 class="serif">Quanto dura</h2>
+    <p>Una manicure semipermanente ben eseguita dura in media <strong>2-3 settimane</strong> mantenendo brillantezza e colore. La durata dipende dalla preparazione dell'unghia, dalla qualità dei prodotti e dalle tue abitudini quotidiane.</p>
+
+    <h2 class="serif">I vantaggi</h2>
+    <ul>
+      <li>Colore intenso e lucido che non si scheggia per giorni.</li>
+      <li>Asciugatura immediata in lampada: esci con le mani pronte.</li>
+      <li>Effetto curato anche su unghie corte o fragili.</li>
+    </ul>
+
+    <h2 class="serif">Come prendertene cura</h2>
+    <p>Idrata cuticole e mani ogni giorno con un olio specifico: unghie idratate trattengono meglio lo smalto. Indossa i guanti per le pulizie domestiche, evita di usare le unghie come "attrezzi" e non strappare mai lo smalto che inizia a staccarsi: è il modo più rapido per indebolire la lamina.</p>
+
+    <h2 class="serif">La rimozione (fatta bene)</h2>
+    <p>La rimozione corretta avviene in salone o con la tecnica del wrapping, mai grattando. Rimuovere male il semipermanente è la causa numero uno di unghie sottili e rovinate. Per questo consigliamo cicli con piccole pause, così la lamina respira.</p>
+
+    <div class="card mt2" style="background:var(--crema-2)">
+      <h3 class="serif">Vuoi mani sempre perfette?</h3>
+      <p class="muted mb1">Prenota la tua manicure semipermanente con la nostra onicotecnica.</p>
+      <a class="btn btn-primary" href="../prenota.html?trattamento=Manicure%20semipermanente">Prenota la manicure</a>
+    </div>
+    <p class="mt2"><a href="index.html" class="price">← Torna al blog</a></p>
+  </div>
+</section>
+</article>
+<script>
+SITEUI.mount({ active:"blog/index.html", base:"../",
+  title:"Manicure semipermanente: la guida completa",
+  description:"Durata, vantaggi, cura e rimozione corretta della manicure semipermanente. I consigli delle nostre onicotecniche.",
+  schema:[{ "@context":"https://schema.org","@type":"Article",
+    headline:"Manicure semipermanente: la guida completa",
+    author:{"@type":"Organization",name:SITE.brand.nome},
+    publisher:{"@type":"Organization",name:SITE.brand.nome} }]
+});
+</script>
+</body>
+</html>

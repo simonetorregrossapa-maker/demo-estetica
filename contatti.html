@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css"/>
+<script src="config.js"></script><script src="components.js"></script><script src="app.js"></script>
+</head>
+<body>
+<section class="bg-crema-2" style="padding-bottom:2.5rem">
+  <div class="container">
+    <div class="breadcrumb"><a href="index.html">Home</a> › Contatti</div>
+    <div class="eyebrow">Contatti</div>
+    <h1 class="serif">Dove siamo & <span class="italic">come raggiungerci</span></h1>
+  </div>
+</section>
+
+<section class="bg-crema">
+  <div class="container grid-2">
+    <div class="reveal">
+      <h3 class="serif mb1">Informazioni</h3>
+      <div class="card" style="margin-bottom:1rem"><strong>Indirizzo</strong><p class="muted" id="cAddr"></p></div>
+      <div class="grid-2" style="gap:1rem">
+        <div class="card"><strong>Telefono</strong><p class="mt1"><a id="cTel" class="price" href="#"></a></p></div>
+        <div class="card"><strong>WhatsApp</strong><p class="mt1"><a id="cWa" class="price" href="#" target="_blank" rel="noopener">Scrivici</a></p></div>
+      </div>
+      <div class="card" style="margin-top:1rem"><strong>Email</strong><p class="mt1"><a id="cEmail" class="price" href="#"></a></p></div>
+      <div class="card" style="margin-top:1rem"><strong>Orari di apertura</strong><ul style="list-style:none;margin-top:.6rem;font-size:.9rem" id="cOrari"></ul></div>
+    </div>
+
+    <div class="reveal d1">
+      <h3 class="serif mb1">Scrivici</h3>
+      <div class="card">
+        <div class="fld-row"><label class="fld" for="kName">Nome</label><input id="kName" placeholder="Il tuo nome"/></div>
+        <div class="fld-row"><label class="fld" for="kEmail">Email</label><input id="kEmail" type="email" placeholder="email@esempio.it"/></div>
+        <div class="fld-row"><label class="fld" for="kMsg">Messaggio</label><textarea id="kMsg" rows="4" placeholder="Come possiamo aiutarti?"></textarea></div>
+        <label class="consent fld-row"><input type="checkbox" id="kConsent"/><span>Acconsento al trattamento dei dati per essere ricontattata. <a href="privacy.html">Privacy</a>.</span></label>
+        <button class="btn btn-primary" style="width:100%;justify-content:center" id="kSend">Invia messaggio</button>
+      </div>
+      <p class="muted small mt1">Preferisci il telefono? Chiamaci negli orari di apertura.</p>
+    </div>
+  </div>
+</section>
+
+<section style="padding:0"><iframe id="mapsFrame" title="Mappa" width="100%" height="420" style="border:0;display:block" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></section>
+
+<script>
+SITEUI.mount({
+  active:"contatti.html", title:"Contatti",
+  description:"Indirizzo, telefono, WhatsApp e orari di Bellezza Studio a Palermo. Scrivici o prenota online.",
+  onReady(){
+    const S=SITE;
+    document.getElementById("cAddr").textContent = SITEUI.indirizzoFull;
+    const tel=document.getElementById("cTel"); tel.textContent=S.contatti.telDisplay; tel.href=SITEUI.telLink;
+    document.getElementById("cWa").href = SITEUI.waLink();
+    const em=document.getElementById("cEmail"); em.textContent=S.contatti.email; em.href="mailto:"+S.contatti.email;
+    document.getElementById("cOrari").innerHTML = S.orari.testo.map(r=>`<li style="display:flex;justify-content:space-between;padding:.25rem 0"><span class="muted">${r.g}</span><span>${r.o}</span></li>`).join("");
+    document.getElementById("mapsFrame").src = S.contatti.mapsEmbed || `https://maps.google.com/maps?q=${encodeURIComponent(S.contatti.mapsQuery)}&output=embed&hl=it&z=16`;
+    document.getElementById("kSend").onclick = async ()=>{
+      const g=id=>document.getElementById(id).value.trim();
+      if(!g("kName")||!g("kEmail")) return SITEAPP.toast("⚠️","Compila nome ed email");
+      if(!document.getElementById("kConsent").checked) return SITEAPP.toast("⚠️","Serve il consenso privacy");
+      try{
+        if(S.integrazioni.web3formsKey && S.integrazioni.web3formsKey!=="YOUR_WEB3FORMS_KEY"){
+          await Booking.w3f("CONTATTO dal sito:\n\n"+g("kMsg"), g("kName"), g("kEmail"));
+        }
+        SITEAPP.toast("✓","Messaggio inviato! Ti ricontattiamo presto.");
+        ["kName","kEmail","kMsg"].forEach(id=>document.getElementById(id).value="");
+        document.getElementById("kConsent").checked=false;
+      }catch(e){ SITEAPP.toast("❌","Errore. Chiamaci al "+S.contatti.telDisplay); }
+    };
+  }
+});
+</script>
+</body>
+</html>

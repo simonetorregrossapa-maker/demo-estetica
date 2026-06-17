@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css"/>
+<script src="config.js"></script><script src="components.js"></script><script src="app.js"></script>
+</head>
+<body>
+<section class="bg-crema-2" style="padding-bottom:2.5rem">
+  <div class="container center">
+    <div class="breadcrumb" style="text-align:left"><a href="index.html">Home</a> › Recensioni</div>
+    <div class="eyebrow" style="justify-content:center">Dicono di noi</div>
+    <h1 class="serif">La fiducia delle <span class="italic">nostre clienti</span></h1>
+    <div class="stars" style="color:var(--oro);font-size:1.6rem;letter-spacing:.15em;margin-top:.6rem">★★★★★</div>
+    <p class="muted">Media 4,9 su 5 — oltre 187 recensioni Google</p>
+  </div>
+</section>
+
+<section class="bg-crema"><div class="container grid-3" id="revBox"></div></section>
+
+<section class="bg-crema-2 center">
+  <div class="container">
+    <h2 class="serif">Sei stata da noi di recente?</h2>
+    <p class="lead mt1" style="max-width:46ch;margin-inline:auto">Il tuo parere conta. Raccontaci com'è andata: ci aiuti a migliorare ogni giorno.</p>
+    <!-- Widget Google recensioni: predisposto. Inserire qui l'embed (es. Elfsight/Google) quando attivo. -->
+    <div class="mt2" id="gReview"></div>
+  </div>
+</section>
+
+<script>
+SITEUI.mount({
+  active:"recensioni.html", title:"Recensioni",
+  description:"Le recensioni delle clienti di Bellezza Studio: media 4,9/5 su Google. Leggi le testimonianze e lascia la tua.",
+  schema: SITE.recensioni.map(r=>({ "@context":"https://schema.org","@type":"Review",
+    reviewRating:{"@type":"Rating",ratingValue:r.voto,bestRating:5},
+    author:{"@type":"Person",name:r.nome},
+    itemReviewed:{"@type":"BeautySalon",name:SITE.brand.nome}, reviewBody:r.testo })),
+  onReady(){
+    const S=SITE;
+    // duplico le testimonianze per riempire la griglia in modo realistico
+    const all = S.recensioni.concat(S.recensioni.map(r=>({...r})));
+    document.getElementById("revBox").innerHTML = all.map((r,i)=>`
+      <div class="review reveal d${(i%3)+1}"><div class="stars">${"★".repeat(r.voto)}</div><p class="small">"${r.testo}"</p><div class="who">${r.nome}</div><div class="src">${r.fonte} · ${r.voto}/5</div></div>`).join("");
+    document.getElementById("gReview").innerHTML = `<a class="btn btn-primary" href="${Reviews.googleUrl()}" target="_blank" rel="noopener">★ Lascia una recensione su Google</a>`;
+  }
+});
+</script>
+</body>
+</html>

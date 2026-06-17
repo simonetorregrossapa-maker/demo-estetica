@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="../styles.css"/>
+<script src="../config.js"></script><script src="../components.js"></script><script src="../app.js"></script>
+</head>
+<body>
+<article>
+<section class="bg-crema-2" style="padding-bottom:2rem">
+  <div class="container prose">
+    <div class="breadcrumb"><a href="../index.html">Home</a> › <a href="index.html">Blog</a> › Cellulite</div>
+    <span class="pill">Corpo</span>
+    <h1 class="serif" style="margin-top:.6rem">Cellulite: cosa funziona davvero (e cosa no)</h1>
+    <p class="muted">Tempo di lettura: 5 min · a cura delle estetiste di Bellezza Studio</p>
+  </div>
+</section>
+<section class="bg-crema">
+  <div class="container prose">
+    <p class="lead">La cellulite riguarda la grande maggioranza delle donne, a ogni età e taglia. Capirla aiuta a scegliere i trattamenti giusti — e a diffidare delle promesse miracolose.</p>
+
+    <h2 class="serif">Cos'è davvero</h2>
+    <p>La cosiddetta "pelle a buccia d'arancia" nasce da una combinazione di fattori: struttura del tessuto adiposo, microcircolazione rallentata, ritenzione idrica e componente ormonale. Non è solo una questione di peso: anche persone magre possono averla.</p>
+
+    <h2 class="serif">Cosa aiuta concretamente</h2>
+    <ul>
+      <li><strong>Massaggio drenante e linfodrenaggio:</strong> migliorano la microcircolazione e riducono il gonfiore, rendendo la pelle più liscia e tonica.</li>
+      <li><strong>Trattamenti rimodellanti</strong> con principi attivi mirati e manualità specifiche, in cicli regolari.</li>
+      <li><strong>Movimento costante e idratazione:</strong> camminare, ridurre il sale e bere a sufficienza fa più di qualunque crema usata una tantum.</li>
+      <li><strong>Costanza:</strong> i percorsi a sedute danno risultati visibili dove il trattamento isolato non basta.</li>
+    </ul>
+
+    <h2 class="serif">Cosa non funziona</h2>
+    <p>Diffida da chi promette di "eliminare la cellulite per sempre" in una seduta: non esiste. Le creme da sole non penetrano abbastanza da sciogliere il tessuto, e le diete drastiche peggiorano spesso l'aspetto della pelle. L'approccio efficace è graduale e combina estetica, movimento e alimentazione.</p>
+
+    <h2 class="serif">Il nostro approccio</h2>
+    <p>Partiamo da una valutazione del tipo di inestetismo e costruiamo un percorso realistico, spiegandoti cosa aspettarti seduta dopo seduta. Niente promesse gonfiate: solo risultati concreti e misurabili.</p>
+
+    <div class="card mt2" style="background:var(--crema-2)">
+      <h3 class="serif">Vuoi una valutazione?</h3>
+      <p class="muted mb1">Prenota un trattamento anticellulite o una consulenza dedicata.</p>
+      <a class="btn btn-primary" href="../prenota.html?trattamento=Trattamento%20anticellulite">Prenota ora</a>
+    </div>
+    <p class="mt2"><a href="index.html" class="price">← Torna al blog</a></p>
+  </div>
+</section>
+</article>
+<script>
+SITEUI.mount({ active:"blog/index.html", base:"../",
+  title:"Cellulite: cosa funziona davvero",
+  description:"Guida onesta alla cellulite: cause, trattamenti estetici efficaci e abitudini che aiutano. Senza promesse miracolose.",
+  schema:[{ "@context":"https://schema.org","@type":"Article",
+    headline:"Cellulite: cosa funziona davvero",
+    author:{"@type":"Organization",name:SITE.brand.nome},
+    publisher:{"@type":"Organization",name:SITE.brand.nome} }]
+});
+</script>
+</body>
+</html>
