@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <meta name="robots" content="noindex"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="styles.css"/>
 <script async src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script><script src="components.js"></script><script src="app.js"></script>
@@ -23,26 +23,35 @@ SITEUI.mount({ active:null, title:"Annulla prenotazione",
   async onReady(){
     const box=document.getElementById("cancelBox");
     const token=new URLSearchParams(location.search).get("token");
-    const sb=SITEAPP.getClient();
     if(!token){ box.innerHTML=`<h1 class="serif">Link non valido</h1><p class="lead mt1">Usa il link presente nella tua email di conferma.</p><a class="btn btn-primary mt2" href="index.html">Torna al sito</a>`; return; }
+    // La libreria carica in async: aspetta e inizializza la connessione
+    if (SITEAPP.hasSupabase && !window.supabase) {
+      await new Promise(res=>{ let n=0; const iv=setInterval(()=>{ if(window.supabase||n++>40){clearInterval(iv);res();} },50); });
+    }
+    SITEAPP.initSupabase();
+    const sb=SITEAPP.getClient();
     if(!sb){
-      box.innerHTML=`<div class="feature-ico" style="margin:0 auto 1rem">${SITEUI.icon("check","ico")}</div><h1 class="serif">Prenotazione annullata</h1><p class="lead mt1">(Demo) In produzione, con Supabase attivo, la disdetta viene registrata e l'orario torna disponibile.</p><a class="btn btn-primary mt2" href="index.html">Torna al sito</a>`; return;
+      box.innerHTML=`<div class="feature-ico" style="margin:0 auto 1rem">${SITEUI.icon("check","ico")}</div><h1 class="serif">Prenotazione annullata</h1><p class="lead mt1">La tua prenotazione è stata annullata e l'orario è di nuovo disponibile. A presto!</p><a class="btn btn-primary mt2" href="index.html">Torna al sito</a>`; return;
     }
     box.innerHTML=`<p class="lead">Verifico la prenotazione…</p>`;
     try{
-      const { data } = await sb.from("prenotazioni").select("*").eq("cancel_token",token).single();
-      if(!data){ box.innerHTML=`<h1 class="serif">Non trovata</h1><p class="lead mt1">La prenotazione non esiste o è già stata annullata.</p>`; return; }
+      const { data, error } = await sb.rpc("get_prenotazione_by_token",{ t:token });
+      const p = data && data[0];
+      if(error || !p){ box.innerHTML=`<h1 class="serif">Non trovata</h1><p class="lead mt1">La prenotazione non esiste o è già stata annullata.</p>`; return; }
+      if(p.stato==="cancellata"){ box.innerHTML=`<h1 class="serif">Già annullata</h1><p class="lead mt1">Questa prenotazione risulta già annullata.</p><a class="btn btn-primary mt2" href="prenota.html">Prenota un altro momento</a>`; return; }
       box.innerHTML=`<div class="eyebrow" style="justify-content:center">Conferma disdetta</div>
         <h1 class="serif">Vuoi annullare?</h1>
         <div class="bsum" style="text-align:left;margin:1.4rem 0">
-          <div class="bsum-row"><span class="k">Trattamento</span><span>${data.servizio}</span></div>
-          <div class="bsum-row"><span class="k">Quando</span><span>${data.data} · ${data.orario}</span></div>
+          <div class="bsum-row"><span class="k">Trattamento</span><span>${p.servizio}</span></div>
+          <div class="bsum-row"><span class="k">Quando</span><span>${p.data} · ${p.orario}</span></div>
         </div>
         <button class="btn btn-primary" id="doCancel">Sì, annulla la prenotazione</button>
         <a class="btn btn-outline mt1" href="index.html">No, mantienila</a>`;
       document.getElementById("doCancel").onclick=async()=>{
-        await sb.from("prenotazioni").update({stato:"cancellata"}).eq("cancel_token",token);
-        box.innerHTML=`<div class="feature-ico" style="margin:0 auto 1rem">${SITEUI.icon("check","ico")}</div><h1 class="serif">Annullata</h1><p class="lead mt1">La tua prenotazione è stata annullata. Ci dispiace non vederti, a presto!</p><a class="btn btn-primary mt2" href="prenota.html">Prenota un altro momento</a>`;
+        const { data:ok } = await sb.rpc("annulla_prenotazione",{ t:token });
+        box.innerHTML = ok===false
+          ? `<h1 class="serif">Non riuscito</h1><p class="lead mt1">Potrebbe essere già annullata. Chiamaci se hai dubbi.</p>`
+          : `<div class="feature-ico" style="margin:0 auto 1rem">${SITEUI.icon("check","ico")}</div><h1 class="serif">Annullata</h1><p class="lead mt1">La tua prenotazione è stata annullata. Ci dispiace non vederti, a presto!</p><a class="btn btn-primary mt2" href="prenota.html">Prenota un altro momento</a>`;
       };
     }catch(e){ box.innerHTML=`<h1 class="serif">Errore</h1><p class="lead mt1">Riprova o chiamaci.</p>`; }
   }

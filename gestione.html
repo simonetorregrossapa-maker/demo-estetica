@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="robots" content="noindex"/>
+<title>Gestione prenotazioni</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css"/>
+<script async src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script><script src="components.js"></script><script src="app.js"></script>
+</head>
+<body>
+<!-- DASHBOARD GESTIONE PRENOTAZIONI (area titolare).
+     Vedi gli appuntamenti del giorno, conferma/annulla, blocca orari o giorni.
+     Login via Supabase Auth. Senza Supabase configurato gira in demo con dati finti. -->
+<section class="bg-crema-2" style="padding-bottom:1.5rem">
+  <div class="container">
+    <div class="eyebrow">Area gestione · solo titolare</div>
+    <h1 class="serif">Gestione <span class="italic">prenotazioni</span></h1>
+    <p class="muted" id="mgMode"></p>
+  </div>
+</section>
+
+<section class="bg-crema" style="padding-top:1.5rem">
+  <div class="container">
+    <div id="mgRoot"></div>
+    <p class="muted small mt2">Recensioni e feedback privati: vai alla <a href="dashboard.html">Dashboard recensioni</a>.</p>
+  </div>
+</section>
+
+<script>
+SITEUI.mount({ active:null, hideFab:true,
+  onReady(){ Manage.init(); }
+});
+</script>
+</body>
+</html>

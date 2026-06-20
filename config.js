@@ -1,5 +1,5 @@
 /* ============================================================================
-   CONFIGURAZIONE CENTRALE — Bellezza Studio (template centri estetici)
+   CONFIGURAZIONE CENTRALE — Torregrossa Studio (template centri estetici)
    ----------------------------------------------------------------------------
    Questo è L'UNICO file da modificare per ribrandizzare il sito su un nuovo
    cliente. Cambia nome, colori, contatti, orari, trattamenti, team, pacchetti,
@@ -11,7 +11,7 @@ window.SITE = {
 
   /* ── IDENTITÀ ATTIVITÀ ─────────────────────────────────────────────── */
   brand: {
-    nome:        "Bellezza Studio",
+    nome:        "Torregrossa Studio",
     claim:       "Istituto di bellezza & SPA urbana",
     citta:       "Palermo",
     provincia:   "PA",
@@ -28,7 +28,7 @@ window.SITE = {
     telDisplay:  "+39 091 123 4567",
     telHref:     "+39091234567",
     whatsapp:    "393201234567",          // solo cifre, con prefisso internazionale
-    email:       "info@bellezzastudio.it",
+    email:       "info@torregrossastudio.it",
     // Coordinate o query per la mappa Google embed (nome + indirizzo come fallback)
     mapsQuery:   "Via della Libertà 128, Palermo",
     mapsEmbed:   "",                        // opzionale: URL embed diretto (pb=...). Se vuoto usa mapsQuery
@@ -56,19 +56,23 @@ window.SITE = {
     // Palette beauty sofisticata e calda — NIENTE oro. Rosa antico/cipria +
     // verde salvia + crema/tortora. Tonalità verificate per contrasto AA.
     colori: {
-      "rosa":        "#c28f88",   // cipria / rosa antico — accento decorativo
-      "rosa-light":  "#e0c2bd",   // blush tenue (sfondi morbidi, avatar)
-      "rosa-dark":   "#9c5e58",   // azione/CTA e testo accento (AA su bianco)
-      "salvia":      "#93a48e",   // verde salvia — accento secondario
-      "salvia-dark": "#5e6e5a",   // sezioni salvia + testo (AA su bianco)
-      "crema":       "#f7f3ed",   // sfondo chiaro caldo
-      "crema-2":     "#efe7db",   // crema più profonda
-      "sabbia":      "#e2d7c8",   // tortora/sabbia — bordi e divisori
-      "carbone":     "#322d28",   // testo scuro caldo (near-black)
-      "grigio":      "#786e62",   // testo tenue (contrasto migliorato)
+      // Palette TWINS BEAUTY — bianco/crema + nero + ORO/bronzo. (Scelta esplicita del cliente.)
+      // Accenti con testo bianco usano il bronzo (AA); l'oro chiaro è solo decorativo (gradienti/bordi).
+      "rosa":        "#8c6a3f",   // bronzo — accento con testo bianco (nav CTA, chip, link) — nome mantenuto per compat.
+      "rosa-light":  "#f4ecdd",   // oro pallido/crema — sfondi morbidi, blob, community
+      "rosa-dark":   "#6e4e2e",   // bronzo profondo — azioni/CTA, testo accento (AA su bianco)
+      "salvia":      "#b9ac9a",   // taupe caldo — accento secondario
+      "salvia-dark": "#2c2823",   // espresso quasi nero — sezioni scure (testo crema AA)
+      "crema":       "#ffffff",   // bianco — sfondo principale (come twins)
+      "crema-2":     "#faf7f1",   // crema appena calda — sezioni alternate
+      "sabbia":      "#e9e2d6",   // sabbia chiara — bordi e divisori
+      "carbone":     "#1a1a1a",   // near-black — testo (come twins)
+      "grigio":      "#6f665a",   // grigio caldo — testo tenue (AA su bianco)
+      "gold":        "#c9a36a",   // ORO chiaro — accento decorativo (gradienti titoli, bordi)
+      "gold-dark":   "#8c6a3f",   // bronzo — oro scuro
     },
-    fontTitoli:  "'Cormorant Garamond', serif",
-    fontTesto:   "'Outfit', sans-serif",
+    fontTitoli:  "'Poppins', sans-serif",
+    fontTesto:   "'Montserrat', sans-serif",
   },
 
   /* ── CATEGORIE E TRATTAMENTI ───────────────────────────────────────── */
@@ -76,17 +80,17 @@ window.SITE = {
   // Trattamenti, selettore in prenotazione, schema.org Service.
   categorie: [
     {
-      id: "viso", nome: "Viso", foto: "1596755094514-f87e34085b2c",
+      id: "viso", nome: "Viso", foto: "1570172619644-dfd03ed5d881",
       descr: "Trattamenti viso personalizzati: pulizia profonda, idratazione e anti-età.",
       trattamenti: [
         { nome: "Pulizia viso profonda",      durata: 60, prezzo: 55, descr: "Detersione, esfoliazione, estrazione e maschera su misura del tuo tipo di pelle." },
         { nome: "Trattamento idratante",      durata: 50, prezzo: 50, descr: "Reidratazione intensa per pelli secche e spente, con acido ialuronico." },
-        { nome: "Trattamento anti-age",       durata: 75, prezzo: 80, descr: "Protocollo distensivo con peptidi e massaggio liftante per ridurre i segni del tempo." },
+        { nome: "Trattamento anti-age",       durata: 75, prezzo: 80, richiamo: 30, descr: "Protocollo distensivo con peptidi e massaggio liftante per ridurre i segni del tempo." },
         { nome: "Trattamento purificante",    durata: 60, prezzo: 60, descr: "Per pelli miste e impure: riequilibra il sebo e affina la grana della pelle." },
       ],
     },
     {
-      id: "corpo", nome: "Corpo", foto: "1540555700478-4be289fbecef",
+      id: "corpo", nome: "Corpo", foto: "1542848284-8afa78a08ccb",
       descr: "Rituali corpo rimodellanti, drenanti e rilassanti.",
       trattamenti: [
         { nome: "Massaggio rilassante",        durata: 50, prezzo: 55, descr: "Manualità lente e avvolgenti per sciogliere tensioni e ritrovare equilibrio." },
@@ -99,7 +103,7 @@ window.SITE = {
       id: "epilazione", nome: "Epilazione", foto: "1598440947619-2c35fc9aa908",
       descr: "Epilazione con cera tiepida e prodotti lenitivi professionali.",
       trattamenti: [
-        { nome: "Gambe complete",     durata: 40, prezzo: 28, descr: "Epilazione gambe intere con cera delicata e trattamento post-epilatorio." },
+        { nome: "Gambe complete",     durata: 40, prezzo: 28, richiamo: 28, descr: "Epilazione gambe intere con cera delicata e trattamento post-epilatorio." },
         { nome: "Mezza gamba",        durata: 25, prezzo: 18, descr: "Epilazione metà gamba." },
         { nome: "Inguine + ascelle",  durata: 30, prezzo: 25, descr: "Zone sensibili con cera tiepida lenitiva." },
         { nome: "Viso (sopracciglia/labbro)", durata: 20, prezzo: 12, descr: "Definizione sopracciglia e rifinitura labbro superiore." },
@@ -110,13 +114,13 @@ window.SITE = {
       descr: "Manicure e pedicure curate, con smalti semipermanenti di alta tenuta.",
       trattamenti: [
         { nome: "Manicure classica",          durata: 40, prezzo: 25, descr: "Cura delle cuticole, limatura e smalto a scelta." },
-        { nome: "Manicure semipermanente",    durata: 55, prezzo: 35, descr: "Smalto semipermanente ad alta tenuta, fino a 3 settimane." },
-        { nome: "Pedicure estetica",          durata: 50, prezzo: 38, descr: "Cura completa del piede con esfoliazione e smalto." },
+        { nome: "Manicure semipermanente",    durata: 55, prezzo: 35, richiamo: 21, descr: "Smalto semipermanente ad alta tenuta, fino a 3 settimane." },
+        { nome: "Pedicure estetica",          durata: 50, prezzo: 38, richiamo: 35, descr: "Cura completa del piede con esfoliazione e smalto." },
         { nome: "Pedicure curativa",          durata: 60, prezzo: 45, descr: "Trattamento mirato per piedi che necessitano cure specifiche." },
       ],
     },
     {
-      id: "massaggi", nome: "Massaggi & Benessere", foto: "1570172619644-dfd03ed5d881",
+      id: "massaggi", nome: "Massaggi & Benessere", foto: "1540555700478-4be289fbecef",
       descr: "Percorsi benessere per corpo e mente.",
       trattamenti: [
         { nome: "Massaggio decontratturante", durata: 50, prezzo: 60, descr: "Mirato su collo, spalle e schiena per sciogliere le contratture." },
@@ -130,7 +134,7 @@ window.SITE = {
   /* ── OPERATRICI / ESTETISTE ────────────────────────────────────────── */
   // Equivalente della "scelta barbiere". La prima è il default.
   team: [
-    { nome: "Giulia",   ruolo: "Titolare · Estetista qualificata", esperienza: "12 anni", spec: "Trattamenti viso e anti-age", bio: "Diplomata estetista e specializzata in dermocosmesi, fonda Bellezza Studio nel 2014.", foto: "https://i.pravatar.cc/400?img=45" },
+    { nome: "Giulia",   ruolo: "Titolare · Estetista qualificata", esperienza: "12 anni", spec: "Trattamenti viso e anti-age", bio: "Diplomata estetista e specializzata in dermocosmesi, fonda Torregrossa Studio nel 2014.", foto: "https://i.pravatar.cc/400?img=45" },
     { nome: "Martina",  ruolo: "Estetista · Massoterapista",        esperienza: "8 anni",  spec: "Massaggi e rituali corpo",   bio: "Esperta in tecniche di massaggio e linfodrenaggio, segue i percorsi benessere.", foto: "https://i.pravatar.cc/400?img=47" },
     { nome: "Sara",     ruolo: "Onicotecnica",                       esperienza: "5 anni",  spec: "Mani, piedi e nail care",   bio: "Specializzata in ricostruzione e nail art, cura mani e piedi nei minimi dettagli.", foto: "https://i.pravatar.cc/400?img=44" },
   ],
@@ -171,7 +175,7 @@ window.SITE = {
   // ID foto Unsplash (verificate). Helper SITEUI.photo(id,w,h) costruisce l'URL.
   // Sostituibili con foto reali del centro: stesso id Unsplash o un percorso /assets.
   media: {
-    hero:        "1571781926291-c477ebfd024b",
+    hero:        "1519823551278-64ac92734fb1",
     chiSiamo:    "1512290923902-8a9f81dc236c",
     ambiente:    ["1519823551278-64ac92734fb1","1580618672591-eb180b1a973f","1512290923902-8a9f81dc236c",
                   "1519014816548-bf5fe059798b","1600334089648-b0d9d3028eb2","1556228578-8c89e6adf883",
@@ -193,8 +197,8 @@ window.SITE = {
   // Lascia i placeholder per far girare la demo SENZA backend (degrada in
   // modo elegante). Compila per attivare prenotazioni reali e recensioni.
   integrazioni: {
-    supabaseUrl:        "YOUR_SUPABASE_URL",         // https://xxxx.supabase.co
-    supabaseAnon:       "YOUR_SUPABASE_ANON_KEY",
+    supabaseUrl:        "https://ykpujseilqkificwqfnd.supabase.co",
+    supabaseAnon:       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrcHVqc2VpbHFraWZpY3dxZm5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NjI4NTksImV4cCI6MjA5NzQzODg1OX0.14FEDt1NRYuWLkV8uvbvWS09SR4CaiHES5aB5NkQwDc",
     // EmailJS — email di conferma al cliente
     emailjsKey:         "YOUR_EMAILJS_PUBLIC_KEY",
     emailjsService:     "YOUR_EMAILJS_SERVICE",
@@ -212,7 +216,7 @@ window.SITE = {
     googlePlaceId:    "YOUR_GOOGLE_PLACE_ID",
     googleReviewUrl:  "",   // opzionale: incolla qui il link completo se già lo hai
     canale:           "email",   // "email" | "sms" | "whatsapp" (riusa il canale del sito)
-    oreAttesa:        3,          // ore dopo l'appuntamento prima di inviare la richiesta
+    oreAttesa:        2,          // ore dopo l'appuntamento prima di inviare la richiesta
     sogliaStelle:     4,          // >= soglia → Google ; < soglia → feedback privato
     // Template messaggi (segnaposto: {nome}, {trattamento}, {attivita})
     messaggi: {
@@ -223,9 +227,42 @@ window.SITE = {
     consensoObbligatorio: true,   // GDPR: invio solo con consenso esplicito
   },
 
+  /* ── AUTOMAZIONI (ciclo di vita cliente) ───────────────────────────────
+     Suite di automazioni che lavorano da sole via Supabase Edge Functions:
+       • conferma prenotazione      → function prenotazione-email (webhook)
+       • promemoria appuntamento     → function promemoria        (cron orario)
+       • recensione post-trattamento → function recensioni        (cron, vedi recensioniAuto)
+       • riattivazione dormienti     → function riattivazione     (cron giornaliero)
+       • recupero contatti persi     → tabella contatti_persi + contatto-email (webhook)
+       • email offerte a tutte       → function broadcast         (dal pannello)
+     I PARAMETRI OPERATIVI reali vivono nella tabella `settings` di Supabase
+     (lette dalle function). I valori qui sotto documentano la configurazione e
+     guidano il COMPORTAMENTO FRONT-END (quando proporre il richiamo). */
+  automazioni: {
+    // Promemoria: gentile reminder X ore prima, riduce i no-show.
+    promemoria:     { attivo: true, orePrima: 24 },
+    // Riattivazione: win-back di chi non torna da troppo tempo, con un incentivo.
+    riattivazione:  { attivo: true, giorniDormiente: 60, cooldownGiorni: 90,
+                      incentivo: "uno sconto del 20% sul tuo prossimo trattamento" },
+    // Recupero contatti persi: cattura il lead che sarebbe una chiamata persa.
+    recuperoContatti: {
+      attivo: true,
+      // true = il box "Ti richiamiamo noi" appare SOLO quando il centro è chiuso;
+      // false = sempre disponibile (es. su Contatti).
+      soloQuandoChiuso: false,
+      testo: "Linea occupata o sei di fretta? Lasciaci il numero, ti richiamiamo noi.",
+    },
+    // Lista d'attesa / posti last-minute: quando un giorno è pieno la cliente si
+    // iscrive; alla prima cancellazione viene avvisata che si è liberato un posto.
+    listaAttesa: { attivo: true },
+    // Richiesta automatica di nuovo appuntamento ("è ora del ritocco"). L'intervallo
+    // si prende dal trattamento (campo `richiamo` in giorni) o da `giorniDefault`.
+    nuovoAppuntamento: { attivo: true, giorniDefault: 30 },
+  },
+
   /* ── SEO ───────────────────────────────────────────────────────────── */
   seo: {
-    dominio:     "https://bellezzastudio.it",   // dominio reale del cliente (per canonical/sitemap/OG)
+    dominio:     "https://torregrossastudio.it",   // dominio reale del cliente (per canonical/sitemap/OG)
     ogImage:     "/assets/og-cover.jpg",
     twitter:     "",
     // Title/description di default; ogni pagina può sovrascrivere via SITE.page()
@@ -234,9 +271,9 @@ window.SITE = {
 
   /* ── LEGAL ─────────────────────────────────────────────────────────── */
   legal: {
-    titolare:    "Bellezza Studio di Giulia Rossi",
+    titolare:    "Torregrossa Studio di Giulia Rossi",
     pIva:        "01234567890",
     annoInizio:  2014,
-    emailPrivacy:"privacy@bellezzastudio.it",
+    emailPrivacy:"privacy@torregrossastudio.it",
   },
 };

@@ -123,28 +123,36 @@
         const now = new Date();
         const todayISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
         const isToday = this.date === todayISO, nowMin = now.getHours() * 60 + now.getMinutes();
+        let liberi = 0;
         S.orari.slot.forEach(t => {
           const b = document.createElement("button"); b.type = "button"; b.className = "time-btn"; b.textContent = t;
           const [h, mi] = t.split(":").map(Number);
           const past = isToday && (h * 60 + mi) <= nowMin;
           if (booked.includes(t) || past) { b.classList.add("booked"); b.disabled = true; }
-          else { if (this.time === t) b.classList.add("sel"); b.onclick = () => { grid.querySelectorAll(".time-btn").forEach(x => x.classList.remove("sel")); b.classList.add("sel"); this.time = t; this.refreshSummary(); }; }
+          else { liberi++; if (this.time === t) b.classList.add("sel"); b.onclick = () => { grid.querySelectorAll(".time-btn").forEach(x => x.classList.remove("sel")); b.classList.add("sel"); this.time = t; this.refreshSummary(); }; }
           grid.appendChild(b);
         });
+        // Giorno pieno: proponi la lista d'attesa (momento di massimo intento).
+        if (liberi === 0 && ((S.automazioni && S.automazioni.listaAttesa.attivo) !== false)) {
+          const cta = document.createElement("div");
+          cta.style.cssText = "grid-column:1/-1;margin-top:.6rem;padding:.9rem;background:var(--crema-2);border:1px solid var(--sabbia);border-radius:8px;text-align:center";
+          cta.innerHTML = `<p class="muted small" style="margin:0 0 .6rem">Nessun posto libero questo giorno.</p><button type="button" class="btn btn-outline" id="wlOpen" style="justify-content:center">Avvisami se si libera un posto</button>`;
+          grid.appendChild(cta);
+          cta.querySelector("#wlOpen").onclick = () => Waitlist.open({ data: this.date, operatrice: this.op, servizio: this.service.nome });
+        }
       };
       if (!_sb) { render([]); return; }
       grid.innerHTML = `<p class="hint">Caricamento disponibilità…</p>`;
       try {
+        // Legge la VISTA `disponibilita` (solo data/orario/operatrice/stato): nessun
+        // dato personale esposto al pubblico. La doppia prenotazione è impedita a DB
+        // dall'indice unico; ricontrolliamo la disponibilità a ogni scelta di giorno/orario.
         const [pre, blo] = await Promise.all([
-          _sb.from("prenotazioni").select("orario").eq("data", this.date).eq("operatrice", this.op).in("stato", ["confermata", "in_attesa"]),
+          _sb.from("disponibilita").select("orario").eq("data", this.date).eq("operatrice", this.op),
           _sb.from("blocchi").select("orario").eq("data", this.date).eq("operatrice", this.op),
         ]);
         const blocked = (blo.data || []).flatMap(r => r.orario === "GIORNO" ? S.orari.slot : [r.orario]);
         render([...(pre.data || []).map(r => r.orario), ...blocked]);
-        if (this._rt) _sb.removeChannel(this._rt);
-        this._rt = _sb.channel("av_" + this.date)
-          .on("postgres_changes", { event: "*", schema: "public", table: "prenotazioni", filter: "data=eq." + this.date }, () => this.loadAvailability())
-          .subscribe();
       } catch (e) { render([]); }
     },
 
@@ -175,14 +183,17 @@
       const token = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()));
       try {
         if (_sb) {
-          const { data, error } = await _sb.from("prenotazioni").insert([{
+          // Niente .select(): il pubblico non può rileggere la tabella (privacy),
+          // quindi non chiediamo la rappresentazione della riga, solo l'inserimento.
+          const { error } = await _sb.from("prenotazioni").insert([{
             nome: name, email, telefono: phone || null, note: notes || null, consenso: !!consent,
             servizio: this.service.nome, prezzo: this.service.prezzo, durata: this.service.durata + " min",
             operatrice: this.op, data: this.date, orario: this.time, stato: "in_attesa",
             cancel_token: token, created_at: new Date().toISOString(),
-          }]).select().single();
+            // Cadenza per la richiesta automatica di nuovo appuntamento (NULL → default da settings)
+            richiamo_giorni: this.service.richiamo ?? null,
+          }]);
           if (error) throw error;
-          this.lastId = data?.id;
         }
         this.lastToken = token;
         const apptStr = this.fmt(this.date);
@@ -203,7 +214,10 @@
         this.showConfirm(apptStr, email);
         if (this.date) this.time = null, this.loadAvailability();
       } catch (err) {
-        console.error(err); toast("Errore. Chiama il " + S.contatti.telDisplay, "err");
+        console.error(err);
+        const dup = err && (err.code === "23505" || /duplicate|unique/i.test(err.message || ""));
+        toast(dup ? "Quell'orario è appena stato prenotato. Scegline un altro." : "Errore. Chiama il " + S.contatti.telDisplay, dup ? "warn" : "err");
+        if (dup && this.date) { this.time = null; this.loadAvailability(); }
       } finally { btn.disabled = false; btn.textContent = old; }
     },
     async w3f(message, name, email) {
@@ -263,6 +277,7 @@
       });
     },
     async submitFeedback() {
+      initSupabase();
       const txt = (document.getElementById("fbText")?.value || "").trim();
       const contact = (document.getElementById("fbContact")?.value || "").trim();
       if (!txt) return toast("Scrivi qualche riga, grazie", "warn");
@@ -273,8 +288,558 @@
     },
   };
 
+  /* ════════════════════════════════════════════════════════════════════
+     MODULO RECUPERO CONTATTI PERSI — "Ti richiamiamo noi"
+     Cattura il lead che sarebbe stato una chiamata persa: la cliente lascia il
+     numero, finisce nella tabella `contatti_persi` e il titolare la richiama.
+     Degrada in demo (senza Supabase) e con Web3Forms come fallback notifica.
+     ════════════════════════════════════════════════════════════════════ */
+  const Callback = {
+    // Il centro è aperto adesso? (per la nudge "siamo chiusi, ti richiamiamo")
+    isOpenNow() {
+      const now = new Date();
+      if ((S.orari.chiusoGiorni || []).includes(now.getDay())) return false;
+      const slots = S.orari.slot || [];
+      if (!slots.length) return true;
+      const toMin = s => { const [h, m] = s.split(":").map(Number); return h * 60 + (m || 0); };
+      const cur = now.getHours() * 60 + now.getMinutes();
+      return cur >= toMin(slots[0]) && cur <= toMin(slots[slots.length - 1]) + 30;
+    },
+    ensureModal() {
+      if (document.getElementById("cbModal")) return;
+      const m = document.createElement("div");
+      m.id = "cbModal"; m.className = "modal";
+      m.innerHTML = `
+        <div class="modal-card" style="text-align:left;max-width:420px">
+          <div style="display:flex;justify-content:space-between;align-items:start;gap:1rem">
+            <h3 class="serif" style="margin:0">Ti richiamiamo noi</h3>
+            <button id="cbClose" aria-label="Chiudi" style="background:none;border:none;font-size:1.6rem;line-height:1;cursor:pointer;color:var(--grigio);width:auto;padding:0">&times;</button>
+          </div>
+          <div id="cbBody">
+            <p class="muted small" style="margin:.4rem 0 1.1rem">Lasciaci il tuo numero: ti chiamiamo noi appena possibile, nessuna attesa.</p>
+            <div class="fld-row"><label class="fld" for="cbNome">Nome</label><input id="cbNome" placeholder="Il tuo nome"/></div>
+            <div class="fld-row"><label class="fld" for="cbTel">Telefono</label><input id="cbTel" type="tel" inputmode="tel" placeholder="Es. 333 1234567"/></div>
+            <div class="fld-row"><label class="fld" for="cbMotivo">Per cosa? (facoltativo)</label><input id="cbMotivo" placeholder="Es. info su un trattamento"/></div>
+            <label class="consent fld-row"><input type="checkbox" id="cbConsent"/><span>Acconsento a essere ricontattata al numero indicato. <a href="privacy.html">Privacy</a>.</span></label>
+            <button class="btn btn-primary" id="cbSend" style="width:100%;justify-content:center">Richiamatemi</button>
+          </div>
+        </div>`;
+      document.body.appendChild(m);
+      m.addEventListener("click", e => { if (e.target === m) this.close(); });
+      m.querySelector("#cbClose").onclick = () => this.close();
+      m.querySelector("#cbSend").onclick = () => this.submit();
+    },
+    open(prefill) {
+      this.ensureModal();
+      const m = document.getElementById("cbModal");
+      if (prefill && prefill.motivo) { const f = m.querySelector("#cbMotivo"); if (f) f.value = prefill.motivo; }
+      m.classList.add("open");
+      setTimeout(() => { const t = m.querySelector("#cbTel"); if (t) t.focus(); }, 50);
+    },
+    close() { const m = document.getElementById("cbModal"); if (m) m.classList.remove("open"); },
+    async submit() {
+      const g = id => (document.getElementById(id)?.value || "").trim();
+      const nome = g("cbNome"), telefono = g("cbTel"), motivo = g("cbMotivo");
+      const consenso = document.getElementById("cbConsent")?.checked;
+      if (!telefono || telefono.replace(/\D/g, "").length < 6) return toast("Inserisci un numero di telefono valido", "warn");
+      if (!consenso) return toast("Serve il consenso per richiamarti", "warn");
+      const btn = document.getElementById("cbSend"); if (btn) { btn.disabled = true; btn.textContent = "Invio…"; }
+      try {
+        initSupabase();
+        const origine = this.isOpenNow() ? "callback" : "chiusura";
+        if (_sb) {
+          const { error } = await _sb.from("contatti_persi").insert([{ nome: nome || null, telefono, motivo: motivo || null, origine, consenso: true }]);
+          if (error) throw error;
+        } else if (I.web3formsKey && I.web3formsKey !== "YOUR_WEB3FORMS_KEY") {
+          await Booking.w3f(`RICHIESTA DI RICHIAMO\n\nNome: ${nome || "—"}\nTelefono: ${telefono}\nPer: ${motivo || "—"}`, nome || "Cliente", S.contatti.email);
+        }
+        const body = document.getElementById("cbBody");
+        if (body) body.innerHTML = `<div class="center" style="padding:.5rem 0"><div class="feature-ico" style="margin:0 auto 1rem">${SITEUI.icon("phone", "ico")}</div><h3 class="serif">Ti richiamiamo presto</h3><p class="muted">Abbiamo ricevuto il tuo numero. Ti contattiamo al più presto.</p></div>`;
+      } catch (e) {
+        if (btn) { btn.disabled = false; btn.textContent = "Richiamatemi"; }
+        toast("Errore nell'invio. Chiamaci al " + S.contatti.telDisplay, "err");
+      }
+    },
+  };
+
+  /* ════════════════════════════════════════════════════════════════════
+     MODULO LISTA D'ATTESA — posti last-minute
+     La cliente che trova il giorno pieno si iscrive; alla prima cancellazione
+     l'edge function `posto-libero` avvisa la prima in lista che combacia.
+     ════════════════════════════════════════════════════════════════════ */
+  const Waitlist = {
+    _pref: {},
+    fmtDay(iso) { if (!iso) return "Qualsiasi giorno disponibile"; const [y, m, d] = iso.split("-").map(Number); return `${WD[new Date(y, m - 1, d).getDay()]} ${d} ${MESI[m - 1].toLowerCase()} ${y}`; },
+    ensureModal() {
+      if (document.getElementById("wlModal")) return;
+      const m = document.createElement("div");
+      m.id = "wlModal"; m.className = "modal";
+      m.innerHTML = `
+        <div class="modal-card" style="text-align:left;max-width:420px">
+          <div style="display:flex;justify-content:space-between;align-items:start;gap:1rem">
+            <h3 class="serif" style="margin:0">Lista d'attesa</h3>
+            <button id="wlClose" aria-label="Chiudi" style="background:none;border:none;font-size:1.6rem;line-height:1;cursor:pointer;color:var(--grigio);width:auto;padding:0">&times;</button>
+          </div>
+          <div id="wlBody">
+            <p class="muted small" style="margin:.4rem 0 1rem">Ti avvisiamo appena si libera un posto. Nessun impegno.</p>
+            <div class="card" style="background:var(--crema-2);margin-bottom:1rem;font-size:.85rem" id="wlPref"></div>
+            <div class="fld-row"><label class="fld" for="wlNome">Nome</label><input id="wlNome" placeholder="Il tuo nome"/></div>
+            <div class="fld-row"><label class="fld" for="wlEmail">Email</label><input id="wlEmail" type="email" placeholder="email@esempio.it"/></div>
+            <div class="fld-row"><label class="fld" for="wlTel">Telefono (facoltativo)</label><input id="wlTel" type="tel" inputmode="tel" placeholder="Es. 333 1234567"/></div>
+            <label class="consent fld-row"><input type="checkbox" id="wlConsent"/><span>Acconsento a essere avvisata quando si libera un posto. <a href="privacy.html">Privacy</a>.</span></label>
+            <button class="btn btn-primary" id="wlSend" style="width:100%;justify-content:center">Avvisami</button>
+          </div>
+        </div>`;
+      document.body.appendChild(m);
+      m.addEventListener("click", e => { if (e.target === m) this.close(); });
+      m.querySelector("#wlClose").onclick = () => this.close();
+      m.querySelector("#wlSend").onclick = () => this.submit();
+    },
+    open(pref) {
+      this._pref = pref || {};
+      this.ensureModal();
+      const m = document.getElementById("wlModal");
+      const righe = [["Giorno", this.fmtDay(this._pref.data)]];
+      if (this._pref.operatrice) righe.push(["Operatrice", this._pref.operatrice]);
+      if (this._pref.servizio) righe.push(["Trattamento", this._pref.servizio]);
+      m.querySelector("#wlPref").innerHTML = righe.map(([k, v]) => `<div class="bsum-row" style="padding:.2rem 0"><span class="k">${k}</span><span>${v}</span></div>`).join("");
+      m.classList.add("open");
+      setTimeout(() => { const f = m.querySelector("#wlEmail"); if (f) f.focus(); }, 50);
+    },
+    close() { const m = document.getElementById("wlModal"); if (m) m.classList.remove("open"); },
+    async submit() {
+      const g = id => (document.getElementById(id)?.value || "").trim();
+      const nome = g("wlNome"), email = g("wlEmail"), telefono = g("wlTel");
+      const consenso = document.getElementById("wlConsent")?.checked;
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return toast("Inserisci un'email valida", "warn");
+      if (!consenso) return toast("Serve il consenso per avvisarti", "warn");
+      const btn = document.getElementById("wlSend"); if (btn) { btn.disabled = true; btn.textContent = "Invio…"; }
+      try {
+        initSupabase();
+        if (_sb) {
+          const { error } = await _sb.from("liste_attesa").insert([{
+            nome: nome || null, email, telefono: telefono || null,
+            servizio: this._pref.servizio || null, operatrice: this._pref.operatrice || null,
+            data: this._pref.data || null, consenso: true,
+          }]);
+          if (error) throw error;
+        } else if (I.web3formsKey && I.web3formsKey !== "YOUR_WEB3FORMS_KEY") {
+          await Booking.w3f(`LISTA D'ATTESA\n\nNome: ${nome || "—"}\nEmail: ${email}\nTel: ${telefono || "—"}\nGiorno: ${this.fmtDay(this._pref.data)}\nOperatrice: ${this._pref.operatrice || "qualsiasi"}\nTrattamento: ${this._pref.servizio || "—"}`, nome || "Cliente", S.contatti.email);
+        }
+        const body = document.getElementById("wlBody");
+        if (body) body.innerHTML = `<div class="center" style="padding:.5rem 0"><div class="feature-ico" style="margin:0 auto 1rem">${SITEUI.icon("check", "ico")}</div><h3 class="serif">Sei in lista d'attesa</h3><p class="muted">Ti avvisiamo appena si libera un posto. A presto!</p></div>`;
+      } catch (e) {
+        if (btn) { btn.disabled = false; btn.textContent = "Avvisami"; }
+        toast("Errore nell'iscrizione. Riprova o chiamaci.", "err");
+      }
+    },
+  };
+
+  /* ════════════════════════════════════════════════════════════════════
+     MODULO GESTIONE (area titolare): prenotazioni + blocchi giorni/orari.
+     Login via Supabase Auth. Senza Supabase configurato → demo con dati finti.
+     ════════════════════════════════════════════════════════════════════ */
+  const Manage = {
+    date: null, op: "", _rt: null,
+    isoToday() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; },
+
+    demoRows() {
+      const t = this.isoToday();
+      return [
+        { id: 1, nome: "Chiara Rossi", email: "chiara@example.com", telefono: "333 1234567", servizio: "Trattamento anti-age", durata: "75 min", prezzo: 80, operatrice: S.team[0].nome, data: t, orario: "10:00", stato: "in_attesa", note: "Prima volta" },
+        { id: 2, nome: "Federica Marino", email: "federica@example.com", telefono: "333 7654321", servizio: "Massaggio drenante", durata: "50 min", prezzo: 60, operatrice: (S.team[1] || S.team[0]).nome, data: t, orario: "15:30", stato: "confermata", note: "" },
+        { id: 3, nome: "Valentina Sala", email: "vale@example.com", telefono: "", servizio: "Manicure semipermanente", durata: "55 min", prezzo: 35, operatrice: (S.team[2] || S.team[0]).nome, data: t, orario: "17:00", stato: "in_attesa", note: "" },
+      ];
+    },
+
+    async init() {
+      // La CDN supabase-js carica in async: se le chiavi ci sono, aspetta che sia pronta.
+      if (hasSupabase && !window.supabase) {
+        await new Promise(res => { let n = 0; const iv = setInterval(() => { if (window.supabase || n++ > 40) { clearInterval(iv); res(); } }, 50); });
+      }
+      initSupabase();
+      this.date = this.isoToday();
+      if (_sb) {
+        try { const { data } = await _sb.auth.getSession(); if (!data.session) return this.renderLogin(); }
+        catch (e) { return this.renderLogin(); }
+      }
+      this.renderShell();
+    },
+
+    renderLogin() {
+      const root = document.getElementById("mgRoot"); if (!root) return;
+      root.innerHTML = `
+        <div class="book-card" style="max-width:380px;margin:0 auto">
+          <h3 class="serif mb1">Accesso titolare</h3>
+          <div class="fld-row"><label class="fld">Email</label><input id="mgEmail" type="email" autocomplete="username"></div>
+          <div class="fld-row"><label class="fld">Password</label><input id="mgPass" type="password" autocomplete="current-password"></div>
+          <button class="btn btn-primary" id="mgLoginBtn" style="justify-content:center;width:100%">Entra</button>
+          <p class="muted small mt1">Accesso riservato al personale.</p>
+        </div>`;
+      document.getElementById("mgLoginBtn").onclick = async () => {
+        const email = document.getElementById("mgEmail").value.trim();
+        const password = document.getElementById("mgPass").value;
+        if (!email || !password) return toast("Inserisci email e password", "warn");
+        try {
+          const { error } = await _sb.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          this.renderShell();
+        } catch (e) { toast("Credenziali non valide", "err"); }
+      };
+    },
+
+    renderShell() {
+      const root = document.getElementById("mgRoot"); if (!root) return;
+      const note = document.getElementById("mgMode");
+      if (note) note.textContent = _sb ? "" : "Anteprima dimostrativa — dati di esempio.";
+      const ops = `<option value="">Tutte le operatrici</option>` + S.team.map(m => `<option value="${m.nome}">${m.nome}</option>`).join("");
+      const opsAll = S.team.map(m => `<option value="${m.nome}">${m.nome}</option>`).join("");
+      const slotOpts = `<option value="GIORNO">Tutto il giorno</option>` + S.orari.slot.map(s => `<option value="${s}">${s}</option>`).join("");
+      root.innerHTML = `
+        <div class="mg-tabs">
+          <button class="mg-tab sel" data-tab="pren">Prenotazioni</button>
+          <button class="mg-tab" data-tab="chiusure">Chiusure & blocchi</button>
+          <button class="mg-tab" data-tab="contatti">Contatti persi</button>
+          <button class="mg-tab" data-tab="messaggi">Messaggi & marketing</button>
+          <a class="mg-tab" href="dashboard.html">Recensioni</a>
+          ${_sb ? `<button class="mg-tab" id="mgLogout" style="margin-left:auto">Esci</button>` : ``}
+        </div>
+
+        <div data-panel="pren">
+          <div class="grid-4" id="mgStats" style="margin-bottom:1.5rem"></div>
+          <div class="book-card" style="margin-bottom:1.5rem">
+            <div class="grid-2" style="gap:1rem;align-items:end">
+              <div class="fld-row" style="margin:0"><label class="fld">Giorno</label><input id="mgDate" type="date" value="${this.date}"></div>
+              <div class="fld-row" style="margin:0"><label class="fld">Operatrice</label><select id="mgOp">${ops}</select></div>
+            </div>
+          </div>
+          <div id="mgList"></div>
+          <div id="mgWaitlist" style="margin-top:1.5rem"></div>
+        </div>
+
+        <div data-panel="chiusure" hidden>
+          <div class="book-card" style="margin-bottom:1.5rem">
+            <h3 class="serif mb1">Blocca un orario singolo</h3>
+            <p class="muted small mb1">Per il giorno selezionato nella scheda Prenotazioni (<span id="mgBlkDate">${this.date}</span>).</p>
+            <div class="grid-3" style="gap:1rem;align-items:end">
+              <div class="fld-row" style="margin:0"><label class="fld">Operatrice</label><select id="mgBlkOp">${opsAll}</select></div>
+              <div class="fld-row" style="margin:0"><label class="fld">Quando</label><select id="mgBlkSlot">${slotOpts}</select></div>
+              <button class="btn btn-primary" id="mgBlock" style="justify-content:center">Blocca</button>
+            </div>
+          </div>
+          <div class="book-card" style="background:var(--crema-2)">
+            <h3 class="serif mb1">Blocca più giorni interi (ferie, chiusure)</h3>
+            <div class="grid-4" style="gap:1rem;align-items:end">
+              <div class="fld-row" style="margin:0"><label class="fld">Operatrice</label><select id="mgRngOp"><option value="__ALL__">Tutte</option>${opsAll}</select></div>
+              <div class="fld-row" style="margin:0"><label class="fld">Dal</label><input id="mgRngFrom" type="date" value="${this.date}"></div>
+              <div class="fld-row" style="margin:0"><label class="fld">Al</label><input id="mgRngTo" type="date" value="${this.date}"></div>
+              <button class="btn btn-primary" id="mgBlockDays" style="justify-content:center">Blocca giorni</button>
+            </div>
+          </div>
+        </div>
+
+        <div data-panel="contatti" hidden>
+          <div class="book-card" style="margin-bottom:1.5rem">
+            <h3 class="serif mb1">Contatti & chiamate da recuperare</h3>
+            <p class="muted small mb1">Chi ti ha lasciato il numero dal sito (richieste di richiamo). Richiamala finché è calda e segnala come gestita.</p>
+          </div>
+          <div id="mgContatti"></div>
+        </div>
+
+        <div data-panel="messaggi" hidden>
+          <div class="book-card" style="margin-bottom:1.5rem;background:var(--crema-2)">
+            <h3 class="serif mb1">Riattiva le clienti dormienti</h3>
+            <p class="muted small mb1">Invia un messaggio "ci manchi" con incentivo a chi non torna da oltre ${(S.automazioni && S.automazioni.riattivazione.giorniDormiente) || 60} giorni e ha dato il consenso. Parte da sola ogni giorno; qui puoi lanciarlo manualmente.</p>
+            <button class="btn btn-primary" id="mgRiattiva" style="justify-content:center">Invia win-back ora</button>
+          </div>
+          <div class="book-card" style="margin-bottom:1.5rem">
+            <h3 class="serif mb1">Banner sul sito</h3>
+            <p class="muted small mb1">Compare in cima a tutte le pagine del sito. Stato: <strong id="mgBannerStatus">—</strong></p>
+            <div class="fld-row"><textarea id="mgBannerText" rows="2" placeholder="Es: Posti last minute oggi pomeriggio — prenota online!"></textarea></div>
+            <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+              <button class="btn btn-primary" id="mgBannerPub" style="justify-content:center">Pubblica banner</button>
+              <button class="btn btn-outline" id="mgBannerDel" style="justify-content:center">Rimuovi banner</button>
+            </div>
+          </div>
+          <div class="book-card" style="background:var(--crema-2)">
+            <h3 class="serif mb1">Email a tutte le clienti</h3>
+            <p class="muted small mb1">Invia un messaggio (offerte, novità) a chi ha dato il consenso.</p>
+            <div class="fld-row"><label class="fld">Oggetto</label><input id="mgMailSubj" placeholder="Una sorpresa per te"></div>
+            <div class="fld-row"><label class="fld">Messaggio</label><textarea id="mgMailText" rows="4" placeholder="Scrivi qui l'offerta o la novità…"></textarea></div>
+            <button class="btn btn-primary" id="mgMailSend" style="justify-content:center">Invia email a tutte</button>
+          </div>
+        </div>`;
+
+      // Tab switching
+      root.querySelectorAll(".mg-tab[data-tab]").forEach(t => t.onclick = () => {
+        root.querySelectorAll(".mg-tab[data-tab]").forEach(x => x.classList.remove("sel"));
+        t.classList.add("sel");
+        root.querySelectorAll("[data-panel]").forEach(p => { p.hidden = p.getAttribute("data-panel") !== t.dataset.tab; });
+      });
+      // Prenotazioni
+      const reload = () => { this.date = document.getElementById("mgDate").value; this.op = document.getElementById("mgOp").value; const bd = document.getElementById("mgBlkDate"); if (bd) bd.textContent = this.date; this.loadBookings(); };
+      document.getElementById("mgDate").onchange = reload;
+      document.getElementById("mgOp").onchange = reload;
+      const lo = document.getElementById("mgLogout"); if (lo) lo.onclick = () => this.logout();
+      // Chiusure
+      document.getElementById("mgBlock").onclick = () => this.blockSlot(document.getElementById("mgBlkOp").value, document.getElementById("mgBlkSlot").value);
+      document.getElementById("mgBlockDays").onclick = () => this.blockDays(document.getElementById("mgRngOp").value, document.getElementById("mgRngFrom").value, document.getElementById("mgRngTo").value);
+      // Messaggi & marketing
+      document.getElementById("mgBannerPub").onclick = () => this.publishBanner(document.getElementById("mgBannerText").value);
+      document.getElementById("mgBannerDel").onclick = () => this.removeBanner();
+      document.getElementById("mgMailSend").onclick = () => this.broadcast(document.getElementById("mgMailSubj").value, document.getElementById("mgMailText").value);
+      document.getElementById("mgRiattiva").onclick = () => this.riattivaDormienti();
+      // Contatti persi
+      root.querySelector('.mg-tab[data-tab="contatti"]').addEventListener("click", () => this.loadContatti());
+      this.refreshBannerStatus();
+      this.loadContatti();
+      this.loadBookings();
+    },
+
+    async loadBookings() {
+      const list = document.getElementById("mgList"); if (!list) return;
+      let rows;
+      if (_sb) {
+        list.innerHTML = `<p class="hint">Caricamento…</p>`;
+        try {
+          let q = _sb.from("prenotazioni").select("*").eq("data", this.date).order("orario");
+          if (this.op) q = q.eq("operatrice", this.op);
+          const { data, error } = await q; if (error) throw error;
+          rows = data || [];
+          if (this._rt) _sb.removeChannel(this._rt);
+          this._rt = _sb.channel("mg_" + this.date)
+            .on("postgres_changes", { event: "*", schema: "public", table: "prenotazioni", filter: "data=eq." + this.date }, () => this.loadBookings())
+            .subscribe();
+        } catch (e) { rows = []; }
+      } else {
+        rows = this.demoRows().filter(r => r.data === this.date && (!this.op || r.operatrice === this.op));
+      }
+      this.renderStats(rows);
+      this.renderRows(rows);
+      this.loadWaitlist();
+    },
+
+    renderStats(rows) {
+      const box = document.getElementById("mgStats"); if (!box) return;
+      const att = rows.filter(r => r.stato === "in_attesa").length;
+      const conf = rows.filter(r => r.stato === "confermata").length;
+      const inc = rows.filter(r => r.stato !== "cancellata").reduce((a, r) => a + (Number(r.prezzo) || 0), 0);
+      const stats = [["Appuntamenti", rows.filter(r => r.stato !== "cancellata").length], ["Da confermare", att], ["Confermati", conf], ["Incasso previsto", inc + "€"]];
+      box.innerHTML = stats.map(([l, v]) => `<div class="card center"><div class="stat"><div class="v">${v}</div><div class="l">${l}</div></div></div>`).join("");
+    },
+
+    renderRows(rows) {
+      const list = document.getElementById("mgList"); if (!list) return;
+      if (!rows.length) { list.innerHTML = `<p class="muted center" style="padding:2rem 0">Nessuna prenotazione per questo giorno.</p>`; return; }
+      const badge = s => s === "confermata" ? `<span class="pill" style="background:var(--salvia-dark);color:#fff">Confermata</span>`
+        : s === "cancellata" ? `<span class="pill" style="background:#cf6b5e;color:#fff">Cancellata</span>`
+          : `<span class="pill" style="background:#d9a441;color:#fff">In attesa</span>`;
+      list.innerHTML = rows.map(r => `
+        <div class="card" style="margin-bottom:.8rem;display:flex;gap:1rem;flex-wrap:wrap;align-items:center;justify-content:space-between">
+          <div style="min-width:200px">
+            <div style="display:flex;gap:.6rem;align-items:center;margin-bottom:.3rem"><strong>${r.orario}</strong> ${badge(r.stato)}</div>
+            <div class="serif" style="font-size:1.15rem">${r.servizio}</div>
+            <p class="muted small">${r.nome}${r.telefono ? " · " + r.telefono : ""}${r.email ? " · " + r.email : ""}</p>
+            <p class="muted small">${r.operatrice} · ${r.durata || ""} · ${r.prezzo}€${r.note ? " · Note: " + r.note : ""}</p>
+          </div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            ${r.stato !== "confermata" && r.stato !== "cancellata" ? `<button class="btn btn-primary" data-act="confermata" data-id="${r.id}" style="padding:.6rem 1.2rem;font-size:.62rem">Conferma</button>` : ""}
+            ${r.stato !== "cancellata" ? `<button class="btn btn-outline" data-act="cancellata" data-id="${r.id}" style="padding:.6rem 1.2rem;font-size:.62rem">Annulla</button>` : ""}
+          </div>
+        </div>`).join("");
+      list.querySelectorAll("button[data-act]").forEach(b => b.onclick = () => this.setStato(b.dataset.id, b.dataset.act));
+    },
+
+    async setStato(id, stato) {
+      if (!_sb) { toast("Demo: in produzione aggiornerebbe la prenotazione", "ok"); return; }
+      try { const { error } = await _sb.from("prenotazioni").update({ stato }).eq("id", id); if (error) throw error; toast(stato === "confermata" ? "Prenotazione confermata" : "Prenotazione annullata", "ok"); this.loadBookings(); }
+      catch (e) { toast("Errore aggiornamento", "err"); }
+    },
+
+    async blockSlot(operatrice, orario) {
+      if (!_sb) { toast("Demo: in produzione bloccherebbe " + (orario === "GIORNO" ? "il giorno" : orario) + " per " + operatrice, "ok"); return; }
+      try { const { error } = await _sb.from("blocchi").insert([{ data: this.date, orario, operatrice }]); if (error) throw error; toast("Blocco aggiunto", "ok"); if (this.op === "" || this.op === operatrice) this.loadBookings(); }
+      catch (e) { toast("Errore nel blocco", "err"); }
+    },
+
+    async blockDays(operatrice, from, to) {
+      if (!from || !to) return toast("Scegli le date dal/al", "warn");
+      const days = []; let d = new Date(from); const end = new Date(to);
+      if (d > end) return toast("Intervallo non valido", "warn");
+      for (; d <= end; d.setDate(d.getDate() + 1)) days.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
+      const ops = operatrice === "__ALL__" ? S.team.map(m => m.nome) : [operatrice];
+      if (!_sb) { toast(`Demo: bloccherebbe ${days.length} giorni (${ops.length === 1 ? ops[0] : "tutte le operatrici"})`, "ok"); return; }
+      const rows = []; days.forEach(dt => ops.forEach(op => rows.push({ data: dt, orario: "GIORNO", operatrice: op })));
+      try { const { error } = await _sb.from("blocchi").insert(rows); if (error) throw error; toast(`Bloccati ${days.length} giorni`, "ok"); }
+      catch (e) { toast("Errore nel blocco giorni", "err"); }
+    },
+
+    async publishBanner(text) {
+      text = (text || "").trim(); if (!text) return toast("Scrivi il messaggio del banner", "warn");
+      if (!_sb) { try { localStorage.setItem("demo_annuncio", text); } catch (e) { } toast("Demo: banner pubblicato (visibile su questo browser)", "ok"); this.refreshBannerStatus(); return; }
+      try {
+        await _sb.from("annunci").update({ attivo: false }).eq("attivo", true);
+        const { error } = await _sb.from("annunci").insert([{ testo: text, attivo: true }]); if (error) throw error;
+        toast("Banner pubblicato sul sito", "ok"); this.refreshBannerStatus();
+      } catch (e) { toast("Errore pubblicazione banner", "err"); }
+    },
+    async removeBanner() {
+      if (!_sb) { try { localStorage.removeItem("demo_annuncio"); } catch (e) { } toast("Banner rimosso", "ok"); this.refreshBannerStatus(); return; }
+      try { const { error } = await _sb.from("annunci").update({ attivo: false }).eq("attivo", true); if (error) throw error; toast("Banner rimosso", "ok"); this.refreshBannerStatus(); }
+      catch (e) { toast("Errore rimozione banner", "err"); }
+    },
+    async refreshBannerStatus() {
+      const el = document.getElementById("mgBannerStatus"); if (!el) return;
+      let text = "";
+      if (_sb) { try { const { data } = await _sb.from("annunci").select("testo").eq("attivo", true).order("created_at", { ascending: false }).limit(1); text = data && data[0] ? data[0].testo : ""; } catch (e) { } }
+      else { try { text = localStorage.getItem("demo_annuncio") || ""; } catch (e) { } }
+      el.textContent = text ? `attivo — "${text}"` : "nessun banner attivo";
+    },
+
+    async broadcast(subject, text) {
+      subject = (subject || "").trim(); text = (text || "").trim();
+      if (!text) return toast("Scrivi il messaggio dell'email", "warn");
+      if (!confirm("Inviare questa email a tutte le clienti che hanno dato il consenso?")) return;
+      if (!_sb) { toast("Demo: in produzione invierebbe l'email a tutte le clienti", "ok"); return; }
+      try {
+        const { data, error } = await _sb.functions.invoke("broadcast", { body: { subject, text } });
+        if (error) throw error;
+        toast(`Email inviata a ${data && data.inviate != null ? data.inviate : "tutte le"} clienti`, "ok");
+      } catch (e) { toast("Errore invio (verifica l'edge function broadcast)", "err"); }
+    },
+
+    /* ── Contatti persi (recupero chiamate) ───────────────────────────── */
+    demoContatti() {
+      return [
+        { id: 1, nome: "Laura Bianchi", telefono: "333 9988776", motivo: "Info massaggio drenante", origine: "chiusura", stato: "nuovo", created_at: new Date().toISOString() },
+        { id: 2, nome: "Anna Verdi", telefono: "340 1122334", motivo: "", origine: "callback", stato: "richiamato", created_at: new Date(Date.now() - 3600000).toISOString() },
+      ];
+    },
+    async loadContatti() {
+      const box = document.getElementById("mgContatti"); if (!box) return;
+      let rows;
+      if (_sb) {
+        try {
+          const { data, error } = await _sb.from("contatti_persi").select("*").neq("stato", "chiuso").order("created_at", { ascending: false });
+          if (error) throw error;
+          rows = data || [];
+          if (this._rtC) _sb.removeChannel(this._rtC);
+          this._rtC = _sb.channel("mg_contatti")
+            .on("postgres_changes", { event: "*", schema: "public", table: "contatti_persi" }, () => this.loadContatti())
+            .subscribe();
+        } catch (e) { rows = []; }
+      } else { rows = this.demoContatti().filter(r => r.stato !== "chiuso"); }
+      this.renderContatti(rows);
+    },
+    renderContatti(rows) {
+      const box = document.getElementById("mgContatti"); if (!box) return;
+      if (!rows.length) { box.innerHTML = `<p class="muted center" style="padding:2rem 0">Nessun contatto in attesa di richiamo.</p>`; return; }
+      const orig = o => o === "chiusura" ? "centro chiuso" : o === "telefonia" ? "chiamata persa" : "dal sito";
+      const quando = ts => { try { const d = new Date(ts); return d.toLocaleString("it-IT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }); } catch (e) { return ""; } };
+      box.innerHTML = rows.map(r => {
+        const done = r.stato === "richiamato";
+        return `
+        <div class="card" style="margin-bottom:.8rem;display:flex;gap:1rem;flex-wrap:wrap;align-items:center;justify-content:space-between">
+          <div style="min-width:200px">
+            <div style="display:flex;gap:.6rem;align-items:center;margin-bottom:.3rem">
+              <strong>${r.nome || "Senza nome"}</strong>
+              ${done ? `<span class="pill" style="background:var(--salvia-dark);color:#fff">Richiamata</span>` : `<span class="pill" style="background:#d9a441;color:#fff">Da richiamare</span>`}
+            </div>
+            <p class="mt1" style="margin:0"><a class="price" href="tel:${String(r.telefono).replace(/\s+/g, "")}">${r.telefono}</a></p>
+            <p class="muted small">${r.motivo ? r.motivo + " · " : ""}${orig(r.origine)} · ${quando(r.created_at)}</p>
+          </div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            <a class="btn btn-primary" href="tel:${String(r.telefono).replace(/\s+/g, "")}" style="padding:.6rem 1.2rem;font-size:.62rem">Chiama</a>
+            ${!done ? `<button class="btn btn-outline" data-cb="richiamato" data-id="${r.id}" style="padding:.6rem 1.2rem;font-size:.62rem">Segna richiamata</button>` : ""}
+            <button class="btn btn-outline" data-cb="chiuso" data-id="${r.id}" style="padding:.6rem 1.2rem;font-size:.62rem">Archivia</button>
+          </div>
+        </div>`;
+      }).join("");
+      box.querySelectorAll("button[data-cb]").forEach(b => b.onclick = () => this.setContattoStato(b.dataset.id, b.dataset.cb));
+    },
+    async setContattoStato(id, stato) {
+      if (!_sb) { toast("Demo: in produzione aggiornerebbe il contatto", "ok"); return; }
+      try { const { error } = await _sb.from("contatti_persi").update({ stato }).eq("id", id); if (error) throw error; toast(stato === "chiuso" ? "Contatto archiviato" : "Segnata come richiamata", "ok"); this.loadContatti(); }
+      catch (e) { toast("Errore aggiornamento", "err"); }
+    },
+
+    /* ── Lista d'attesa per il giorno selezionato ─────────────────────── */
+    async loadWaitlist() {
+      const box = document.getElementById("mgWaitlist"); if (!box) return;
+      let rows;
+      if (_sb) {
+        try {
+          // In attesa per QUESTO giorno o senza giorno (qualsiasi).
+          const { data, error } = await _sb.from("liste_attesa").select("*").eq("stato", "attiva")
+            .or(`data.eq.${this.date},data.is.null`).order("created_at");
+          if (error) throw error; rows = data || [];
+        } catch (e) { rows = []; }
+      } else {
+        rows = [{ id: 1, nome: "Giada Conti", email: "giada@example.com", telefono: "333 5566778", servizio: "Manicure semipermanente", operatrice: S.team[2] ? S.team[2].nome : null, data: this.date, stato: "attiva" }];
+      }
+      if (!rows.length) { box.innerHTML = ""; return; }
+      box.innerHTML = `<div class="book-card"><h3 class="serif mb1">Lista d'attesa</h3>
+        <p class="muted small mb1">Chi aspetta un posto per ${this.date} (avvisata in automatico alla prima cancellazione).</p>
+        ${rows.map(r => `<div class="card" style="margin-bottom:.6rem;display:flex;gap:1rem;flex-wrap:wrap;align-items:center;justify-content:space-between">
+          <div style="min-width:200px">
+            <strong>${r.nome || "Senza nome"}</strong>
+            <p class="muted small" style="margin:.2rem 0 0">${r.servizio || "Qualsiasi trattamento"}${r.operatrice ? " · " + r.operatrice : " · qualsiasi operatrice"}${r.data ? "" : " · qualsiasi giorno"}</p>
+            <p class="muted small" style="margin:0">${r.email}${r.telefono ? " · " + r.telefono : ""}</p>
+          </div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            ${r.telefono ? `<a class="btn btn-outline" href="tel:${String(r.telefono).replace(/\s+/g, "")}" style="padding:.5rem 1rem;font-size:.62rem">Chiama</a>` : ""}
+            <button class="btn btn-outline" data-wl="${r.id}" style="padding:.5rem 1rem;font-size:.62rem">Rimuovi</button>
+          </div>
+        </div>`).join("")}</div>`;
+      box.querySelectorAll("button[data-wl]").forEach(b => b.onclick = () => this.removeAttesa(b.dataset.wl));
+    },
+    async removeAttesa(id) {
+      if (!_sb) { toast("Demo: rimuoverebbe dalla lista d'attesa", "ok"); return; }
+      try { const { error } = await _sb.from("liste_attesa").update({ stato: "chiusa" }).eq("id", id); if (error) throw error; toast("Rimossa dalla lista", "ok"); this.loadWaitlist(); }
+      catch (e) { toast("Errore", "err"); }
+    },
+
+    /* ── Riattivazione dormienti (lancio manuale del win-back) ─────────── */
+    async riattivaDormienti() {
+      if (!confirm("Inviare ora l'email di riattivazione alle clienti dormienti che hanno dato il consenso?\n(Chi è già stata contattata di recente viene saltata automaticamente.)")) return;
+      if (!_sb) { toast("Demo: in produzione invierebbe il win-back alle clienti dormienti", "ok"); return; }
+      const btn = document.getElementById("mgRiattiva"); if (btn) { btn.disabled = true; btn.textContent = "Invio in corso…"; }
+      try {
+        const { data, error } = await _sb.functions.invoke("riattivazione");
+        if (error) throw error;
+        const n = data && data.inviate != null ? data.inviate : 0;
+        toast(n ? `Win-back inviato a ${n} client${n === 1 ? "e" : "i"}` : "Nessuna cliente dormiente da ricontattare ora", "ok");
+      } catch (e) { toast("Errore (verifica l'edge function riattivazione)", "err"); }
+      finally { if (btn) { btn.disabled = false; btn.textContent = "Invia win-back ora"; } }
+    },
+
+    async logout() { if (_sb) { try { await _sb.auth.signOut(); } catch (e) { } } location.reload(); },
+  };
+
+  /* ── Banner annunci sul sito (pubblicato dal pannello Messaggi) ─────── */
+  async function showAnnouncement() {
+    if (document.getElementById("siteAnnounce")) return;
+    let text = "";
+    if (hasSupabase) {
+      if (!window.supabase) return;   // CDN non ancora pronta: riprova al load
+      initSupabase();
+      if (_sb) { try { const { data } = await _sb.from("annunci").select("testo").eq("attivo", true).order("created_at", { ascending: false }).limit(1); text = data && data[0] ? data[0].testo : ""; } catch (e) { } }
+    } else { try { text = localStorage.getItem("demo_annuncio") || ""; } catch (e) { } }
+    if (!text || sessionStorage.getItem("announce_closed") === text) return;
+    const b = document.createElement("div"); b.id = "siteAnnounce"; b.className = "site-announce";
+    b.innerHTML = `<span></span><button class="sa-close" aria-label="Chiudi">&times;</button>`;
+    b.querySelector("span").textContent = text;   // textContent: niente injection
+    document.body.prepend(b);
+    b.querySelector(".sa-close").onclick = () => { try { sessionStorage.setItem("announce_closed", text); } catch (e) { } b.remove(); };
+  }
+  document.addEventListener("DOMContentLoaded", showAnnouncement);
+  window.addEventListener("load", showAnnouncement);
+
   /* ── Esporta ──────────────────────────────────────────────────────── */
   window.Booking = Booking;
   window.Reviews = Reviews;
-  window.SITEAPP = { initSupabase, toast, hasSupabase, getClient: () => _sb };
+  window.Manage = Manage;
+  window.Callback = Callback;
+  window.Waitlist = Waitlist;
+  window.SITEAPP = { initSupabase, toast, hasSupabase, showAnnouncement, getClient: () => _sb };
 })();

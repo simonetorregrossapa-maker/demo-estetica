@@ -72,6 +72,40 @@ La function legge i parametri runtime dalla tabella `settings` (allineata a `con
 
 ---
 
+## 4. AUTOMAZIONI del ciclo di vita cliente
+
+Suite di automazioni che lavorano da sole (parametri in `config.js → automazioni`, valori runtime nella tabella `settings`). Tutte degradano in modo elegante: senza Supabase la demo resta navigabile.
+
+| Automazione | Cosa fa | Come si attiva |
+|---|---|---|
+| **Conferma prenotazione** | email a cliente + avviso titolare | webhook su INSERT `prenotazioni` → `prenotazione-email` |
+| **Promemoria appuntamento** | reminder ~24h prima → meno no-show | `promemoria`, **cron orario** |
+| **Recensione automatica** | richiesta recensione post-trattamento (smart routing) | `recensioni`, cron (vedi §3) |
+| **Riattivazione dormienti** | win-back con incentivo a chi non torna da oltre N giorni | `riattivazione`, **cron giornaliero** + bottone "Invia win-back ora" nel pannello |
+| **Recupero contatti persi** | cattura il lead che sarebbe una chiamata persa (box "Ti richiamiamo noi") | tabella `contatti_persi` + webhook → `contatto-email`; gestione nel pannello, tab **Contatti persi** |
+| **Lista d'attesa / last-minute** | il giorno è pieno → la cliente si iscrive; alla prima cancellazione la prima in lista viene avvisata | tabella `liste_attesa` + webhook su UPDATE → `posto-libero`; vista nel pannello (tab Prenotazioni) |
+| **Nuovo appuntamento (ritocco)** | "è ora del ritocco": invito a riprenotare dopo l'intervallo del trattamento, se non ha già un appuntamento futuro | `nuovo-appuntamento`, **cron giornaliero**; intervallo da `config.js` (`trattamento.richiamo`) o default |
+| **Email offerte a tutte** | broadcast a chi ha dato il consenso | `broadcast`, dal pannello |
+
+**Deploy delle nuove function:**
+```bash
+supabase functions deploy promemoria        --no-verify-jwt
+supabase functions deploy riattivazione      --no-verify-jwt
+supabase functions deploy contatto-email     --no-verify-jwt
+supabase functions deploy posto-libero       --no-verify-jwt
+supabase functions deploy nuovo-appuntamento --no-verify-jwt
+supabase secrets set RESEND_API_KEY=...  SITE_URL=https://tuodominio.it  WEBHOOK_SECRET=...
+```
+Poi:
+- **cron** (pg_cron): comandi `cron.schedule(...)` nei commenti in testa alle function — `promemoria` (orario), `riattivazione` / `nuovo-appuntamento` (giornaliero).
+- **webhook contatti persi**: Database → Webhooks → su INSERT di `contatti_persi`, POST a `contatto-email`, header `x-webhook-secret: <WEBHOOK_SECRET>`.
+- **webhook posti liberi**: Database → Webhooks → su **UPDATE** di `prenotazioni`, POST a `posto-libero`, stesso header secret (la function reagisce solo alle cancellazioni).
+- ricorda di rilanciare `supabase/schema.sql` (idempotente): aggiunge le tabelle `contatti_persi` / `riattivazioni` / `liste_attesa`, le colonne `promemoria_inviato` / `richiamo_giorni` / `richiamo_inviato` e le nuove chiavi `settings`.
+
+> **Recupero chiamate perse dal centralino vero** (oltre al sito): basta un'integrazione di telefonia (es. Twilio) che, su chiamata senza risposta, faccia una INSERT in `contatti_persi` con `origine='telefonia'`. Il pannello e l'avviso al titolare funzionano già senza altre modifiche.
+
+---
+
 ## 4. Personalizzare per un NUOVO cliente
 
 Nella maggior parte dei casi basta `config.js`:

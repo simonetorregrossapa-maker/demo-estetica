@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="styles.css"/>
 <!-- Backend prenotazioni & email (caricano solo se configurati in config.js) -->
 <script async src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -45,6 +45,7 @@
 
       <div class="step-label"><span class="n">4</span> Scegli l'orario</div>
       <div class="time-grid" id="timeGrid"><p class="hint">Seleziona una data per vedere gli orari</p></div>
+      <p class="muted small mt1" id="wlHint" style="display:none">Non trovi l'orario giusto? <a href="#" id="wlLink">Mettiti in lista d'attesa</a>: ti avvisiamo se si libera un posto.</p>
     </div>
 
     <!-- COLONNA RIEPILOGO + DATI -->
@@ -86,6 +87,12 @@ SITEUI.mount({
       .map(t=>`<span>${SITEUI.icon("check","ico")} ${t}</span>`).join("");
     document.getElementById("confIco").innerHTML = SITEUI.icon("check","ico");
     Booking.init();
+    // Lista d'attesa: link sempre disponibile (oltre all'auto-CTA quando il giorno è pieno)
+    if((SITE.automazioni && SITE.automazioni.listaAttesa.attivo)!==false){
+      const hint=document.getElementById("wlHint"); hint.style.display="block";
+      document.getElementById("wlLink").onclick=(e)=>{ e.preventDefault();
+        Waitlist.open({ data:Booking.date, operatrice:Booking.op, servizio:Booking.service && Booking.service.nome }); };
+    }
   }
 });
 </script>

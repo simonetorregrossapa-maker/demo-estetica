@@ -8,6 +8,26 @@
   const S = window.SITE;
   if (!S) { console.error("config.js non caricato"); return; }
 
+  /* ── MOTORE ANIMAZIONI: GSAP + ScrollTrigger + Lenis (CDN) ──────────
+     Caricato qui (in <head>) così è pronto prima delle animazioni.
+     Degrada con eleganza: se le CDN sono bloccate o l'utente preferisce
+     meno movimento, i contenuti restano visibili senza animazioni.        */
+  const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const MOTION_CDN = {
+    gsap: "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js",
+    st:   "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/ScrollTrigger.min.js",
+    lenis:"https://unpkg.com/lenis@1.1.14/dist/lenis.min.js",
+  };
+  const loadScript = (src) => new Promise((ok, no) => {
+    const s = document.createElement("script"); s.src = src; s.async = false;
+    s.onload = ok; s.onerror = no; document.head.appendChild(s);
+  });
+  // Pre-nascondi (solo se animeremo) per evitare il flash prima dell'entrata.
+  if (!REDUCED) document.documentElement.classList.add("gsap-on");
+  // Avvia subito i download; ScrollTrigger dopo GSAP, Lenis in parallelo.
+  const motionReady = REDUCED ? Promise.reject(new Error("reduced-motion")) :
+    loadScript(MOTION_CDN.gsap).then(() => Promise.all([loadScript(MOTION_CDN.st), loadScript(MOTION_CDN.lenis)]));
+
   /* ── Personalizzazione DEMO via URL (?nome=&citta=&tel=&indirizzo=...) ── */
   const qp = new URLSearchParams(location.search);
   const isDemo = qp.has("nome");
@@ -24,6 +44,31 @@
   Object.entries(S.tema.colori).forEach(([k, v]) => root.setProperty("--" + k, v));
   root.setProperty("--font-titoli", S.tema.fontTitoli);
   root.setProperty("--font-testo", S.tema.fontTesto);
+
+  /* ── LOADER elegante (preloader con logo) — solo una volta per sessione ── */
+  (function loader() {
+    try { if (sessionStorage.getItem("ts_loaded")) return; sessionStorage.setItem("ts_loaded", "1"); } catch (e) {}
+    const gold = S.tema.colori.gold || "#c9a36a", goldD = S.tema.colori["gold-dark"] || "#8c6a3f";
+    const el = document.createElement("div");
+    el.id = "loader"; el.setAttribute("aria-hidden", "true");
+    el.innerHTML =
+      `<div class="loader-inner">
+        <svg class="loader-mark" viewBox="0 0 100 100" aria-hidden="true">
+          <defs><linearGradient id="lmg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="${gold}"/><stop offset="1" stop-color="${goldD}"/>
+          </linearGradient></defs>
+          <circle class="lm-ring" cx="50" cy="50" r="40"/>
+          <path class="lm-leaf" d="M50 84 C30 64 30 34 50 14 C70 34 70 64 50 84 Z"/>
+          <path class="lm-stem" d="M50 84 V40"/>
+          <path class="lm-vein" d="M50 58 C45 53 41 48 39 42 M50 58 C55 53 59 48 61 42"/>
+        </svg>
+        <div class="loader-word">${(S.brand.nome || "").toUpperCase()}</div>
+        <div class="loader-sub">${(S.brand.citta || "").toUpperCase()}</div>
+      </div>`;
+    (document.body || document.documentElement).appendChild(el);
+    // Rimozione dal DOM dopo l'uscita (la sparizione è comunque garantita via CSS).
+    setTimeout(() => el.remove(), 3600);
+  })();
 
   /* ── Helper ──────────────────────────────────────────────────────── */
   const waLink = (msg) => `https://wa.me/${S.contatti.whatsapp}?text=${encodeURIComponent(msg || "Ciao! Vorrei informazioni / prenotare un trattamento.")}`;
@@ -82,7 +127,6 @@
         { "@type": "OpeningHoursSpecification", dayOfWeek: ["Tuesday", "Wednesday", "Thursday", "Friday"], opens: "09:00", closes: "19:30" },
         { "@type": "OpeningHoursSpecification", dayOfWeek: "Saturday", opens: "09:00", closes: "18:00" },
       ],
-      aggregateRating: { "@type": "AggregateRating", ratingValue: "4.9", reviewCount: "187" },
       sameAs: [S.social.instagram, S.social.facebook].filter(Boolean),
     };
     const blocks = [biz].concat(extra || []);
@@ -101,8 +145,19 @@
       const cls = active === href ? "active" : "";
       return `<li><a href="${base + href}" class="${cls}">${lbl}</a></li>`;
     }).join("");
+    const mapsHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(S.contatti.mapsQuery || indirizzoFull)}`;
     const el = document.createElement("header"); el.className = "site";
-    el.innerHTML = `<div class="nav-inner">
+    el.innerHTML = `<div class="topbar">
+      <div class="topbar-inner">
+        <span class="tb-left">${icon("pin","ico-sm")} ${S.brand.indirizzo}, ${S.brand.citta}</span>
+        <div class="tb-right">
+          <a href="${telLink}">${icon("phone","ico-sm")} ${S.contatti.telDisplay}</a>
+          <a href="${waLink()}" target="_blank" rel="noopener">${icon("chat","ico-sm")} WhatsApp</a>
+          <a href="${mapsHref}" target="_blank" rel="noopener">${icon("pin","ico-sm")} Mappa</a>
+        </div>
+      </div>
+    </div>
+    <div class="nav-inner">
       <a class="logo" href="${base}index.html"><b>${S.brand.nome}</b><span class="logo-sub">${S.brand.citta}</span></a>
       <ul class="nav-links" id="navLinks">${links}
         <li><a class="nav-cta" href="${base}prenota.html">Prenota</a></li>
@@ -111,8 +166,17 @@
     </div>`;
     document.body.prepend(el);
     const burger = el.querySelector("#burger"), nav = el.querySelector("#navLinks");
-    burger.addEventListener("click", () => { burger.classList.toggle("open"); nav.classList.toggle("open"); });
-    nav.querySelectorAll("a").forEach(a => a.addEventListener("click", () => { burger.classList.remove("open"); nav.classList.remove("open"); }));
+    const scrim = document.createElement("div"); scrim.className = "nav-scrim"; el.appendChild(scrim);
+    const setMenu = (open) => {
+      burger.classList.toggle("open", open);
+      nav.classList.toggle("open", open);
+      scrim.classList.toggle("open", open);
+      document.body.classList.toggle("nav-open", open);
+    };
+    burger.addEventListener("click", () => setMenu(!nav.classList.contains("open")));
+    scrim.addEventListener("click", () => setMenu(false));
+    nav.querySelectorAll("a").forEach(a => a.addEventListener("click", () => setMenu(false)));
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") setMenu(false); });
   }
 
   /* ── FOOTER ───────────────────────────────────────────────────────── */
@@ -146,12 +210,26 @@
       <span><a href="${base}privacy.html">Privacy</a> · <a href="${base}cookie.html">Cookie</a> · <a href="${base}termini.html">Termini</a></span>
     </div>`;
     document.body.appendChild(f);
+    // Accesso nascosto all'area gestione: 5 click rapidi (entro 2.5s) sul copyright.
+    const secret = f.querySelector(".foot-bottom span");
+    if (secret) {
+      let n = 0, t0 = 0;
+      secret.addEventListener("click", () => {
+        const now = Date.now(); n = (now - t0 < 2500) ? n + 1 : 1; t0 = now;
+        if (n >= 5) { n = 0; location.href = base + "gestione.html"; }
+      });
+    }
   }
 
   /* ── FAB + COOKIE + REVEAL ───────────────────────────────────────── */
-  function extras(base) {
+  function extras(base, page) {
     base = base || "";
-    const fab = document.createElement("a"); fab.className = "fab"; fab.href = base + "prenota.html"; fab.textContent = "Prenota"; document.body.appendChild(fab);
+    if (!(page && page.hideFab)) {
+      const fab = document.createElement("a"); fab.className = "fab"; fab.href = base + "prenota.html";
+      fab.setAttribute("aria-label", "Prenota ora il tuo trattamento");
+      fab.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg> Prenota ora`;
+      document.body.appendChild(fab);
+    }
 
     if (localStorage.getItem("cookie_ok") == null) {
       const c = document.createElement("div"); c.id = "cookieBanner"; c.className = "show";
@@ -161,14 +239,131 @@
       document.body.appendChild(c);
     }
 
-    const io = new IntersectionObserver((es) => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add("visible"); io.unobserve(e.target); } }), { threshold: 0.12 });
-    document.querySelectorAll(".reveal").forEach(el => io.observe(el));
-
     if (isDemo) {
       const b = document.createElement("div"); b.className = "demo-banner";
       b.textContent = `Demo personalizzata per ${S.brand.nome} — questo sito potrebbe essere tuo`;
       document.body.prepend(b);
     }
+  }
+
+  /* ── MOTION: orchestrazione reveal + animazioni GSAP ──────────────── */
+  function revealNow() {
+    document.documentElement.classList.remove("gsap-on");
+    document.querySelectorAll(".reveal").forEach(el => el.classList.add("visible"));
+  }
+
+  function setupAnimations() {
+    const g = window.gsap;
+    if (!g) return revealNow();
+    const ST = window.ScrollTrigger;
+    if (ST) g.registerPlugin(ST);
+
+    // Smooth scroll premium (Lenis) — disattivo su touch coarse per non rompere lo scroll nativo
+    const coarse = window.matchMedia("(pointer:coarse)").matches;
+    if (window.Lenis && ST && !coarse) {
+      const lenis = new window.Lenis({ duration: 1.05, wheelMultiplier: 0.9, smoothWheel: true });
+      lenis.on("scroll", ST.update);
+      g.ticker.add((t) => lenis.raf(t * 1000));
+      g.ticker.lagSmoothing(0);
+      window.__lenis = lenis;
+    }
+
+    // Soft easing coerente (niente rimbalzi: la skill sconsiglia "harsh animations")
+    const EASE = "power3.out";
+
+    // Reveal on scroll: stagger di gruppo (~60ms), ingressi morbidi
+    g.set(".reveal", { opacity: 0, y: 38 });
+    if (ST && ST.batch) {
+      ST.batch(".reveal", {
+        start: "top 86%",
+        onEnter: (els) => g.to(els, { opacity: 1, y: 0, duration: 0.7, ease: EASE, stagger: 0.06, overwrite: true }),
+      });
+    } else {
+      g.utils.toArray(".reveal").forEach((el) =>
+        g.to(el, { opacity: 1, y: 0, duration: 0.7, ease: EASE, scrollTrigger: { trigger: el, start: "top 86%" } }));
+    }
+
+    // HERO: entrata a cascata + svelamento immagine (clip-path) + Ken Burns
+    // NB: uso .fromTo con stato finale ESPLICITO perché il CSS .gsap-on pre-nasconde
+    // l'hero (opacity:0) — un semplice .from animerebbe da invisibile a invisibile.
+    if (document.querySelector(".hero")) {
+      const tl = g.timeline({ defaults: { ease: EASE } });
+      const inUp = (sel, y, d, pos) => tl.fromTo(sel, { y: y, opacity: 0 }, { y: 0, opacity: 1, duration: d }, pos);
+      inUp(".hero .eyebrow", 16, 0.6)
+      inUp(".hero h1", 30, 0.85, "-=0.30");
+      inUp(".hero .lead", 22, 0.7, "-=0.50");
+      inUp(".hero-cta", 18, 0.6, "-=0.45");
+      inUp(".hero-micro", 14, 0.55, "-=0.45");
+      tl.fromTo(".hero-media", { clipPath: "inset(0% 0% 100% 0%)" }, { clipPath: "inset(0% 0% 0% 0%)", duration: 1.05, ease: "power4.out" }, "-=0.95");
+      inUp(".hero-badge", 16, 0.55, "-=0.30");
+
+      if (ST) {
+        const scrub = (trigger) => ({ trigger, start: "top top", end: "bottom top", scrub: true });
+        g.to(".hero-blob.a", { yPercent: 28, ease: "none", scrollTrigger: scrub(".hero") });
+        g.to(".hero-blob.b", { yPercent: -18, ease: "none", scrollTrigger: scrub(".hero") });
+        g.fromTo(".hero-media img", { scale: 1.0 }, { scale: 1.12, ease: "none", scrollTrigger: scrub(".hero") });
+      }
+    }
+
+    // Contatori numerici (solo interi; i decimali tipo "4,9" restano statici)
+    if (ST) {
+      g.utils.toArray(".stat .v").forEach((el) => {
+        const m = el.textContent.trim().match(/^([^\d]*)([\d.]+)([^\d]*)$/);
+        if (!m) return;
+        const target = parseInt(m[2].replace(/\./g, ""), 10);
+        if (isNaN(target) || target <= 0) return;
+        const grp = m[2].includes("."), pre = m[1], suf = m[3], o = { n: 0 };
+        ST.create({
+          trigger: el, start: "top 90%", once: true,
+          onEnter: () => g.to(o, {
+            n: target, duration: 1.5, ease: "power2.out",
+            onUpdate: () => { el.textContent = pre + (grp ? Math.round(o.n).toLocaleString("it-IT") : Math.round(o.n)) + suf; },
+          }),
+        });
+      });
+    }
+
+    // Header compatto allo scroll (micro-interazione)
+    const hdr = document.querySelector("header.site");
+    if (hdr) {
+      const onScroll = () => hdr.classList.toggle("scrolled", (window.scrollY || document.documentElement.scrollTop) > 40);
+      window.addEventListener("scroll", onScroll, { passive: true });
+      onScroll();
+    }
+
+    if (ST) window.addEventListener("load", () => ST.refresh());
+  }
+
+  /* ── Effetto 3D: tilt al puntatore sulle card .tilt (indipendente da GSAP) ── */
+  function initTilt() {
+    if (REDUCED) return;
+    if (window.matchMedia("(pointer:coarse)").matches) return; // solo mouse/trackpad
+    document.querySelectorAll(".tilt").forEach((card) => {
+      const MAX = 10;
+      card.addEventListener("pointermove", (e) => {
+        const r = card.getBoundingClientRect();
+        const dx = (e.clientX - r.left) / r.width - 0.5;
+        const dy = (e.clientY - r.top) / r.height - 0.5;
+        card.style.transform = `rotateY(${dx * MAX}deg) rotateX(${-dy * MAX}deg) translateY(-8px) scale(1.02)`;
+      });
+      card.addEventListener("pointerleave", () => { card.style.transform = ""; });
+    });
+  }
+
+  function initMotion() {
+    // Rende rivelabili anche i blocchi titolo centrati (non marcati .reveal in HTML)
+    document.querySelectorAll(".container > .center, section.center").forEach((el) => el.classList.add("reveal"));
+    if (REDUCED) return revealNow();
+    let settled = false;
+    const fallback = setTimeout(() => { if (!settled) { settled = true; revealNow(); } }, 2500);
+    motionReady
+      .then(() => {
+        if (settled) return;
+        clearTimeout(fallback);
+        try { setupAnimations(); settled = true; }
+        catch (e) { console.error("animazioni:", e); settled = true; revealNow(); }
+      })
+      .catch(() => { if (settled) return; settled = true; clearTimeout(fallback); revealNow(); });
   }
 
   /* ── API pubblica ─────────────────────────────────────────────────── */
@@ -183,7 +378,9 @@
         header(page.active, base);
         footer(base);
         if (page.onReady) page.onReady();   // pagine iniettano i loro .reveal qui…
-        extras(base);                        // …poi l'observer li aggancia tutti
+        extras(base, page);                  // FAB, cookie, banner demo
+        initMotion();                        // …poi GSAP rivela e anima tutto
+        initTilt();                          // effetto 3D sulle card (indip. da GSAP)
       });
     },
   };

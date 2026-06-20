@@ -4,32 +4,37 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="styles.css"/>
-<script src="config.js"></script>
-<script src="components.js"></script>
-<script src="app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css?v=5"/>
+<script src="config.js?v=5"></script>
+<script src="components.js?v=5"></script>
+<script src="app.js?v=5"></script>
 </head>
 <body>
 
-<!-- HERO -->
-<section class="hero">
-  <div class="hero-bg"></div><div class="hero-blob a"></div><div class="hero-blob b"></div>
-  <div class="hero-grid">
-    <div>
-      <div class="eyebrow" id="heroEyebrow">Istituto di bellezza</div>
-      <h1 class="serif">La tua bellezza, <span class="italic">curata nei dettagli</span></h1>
-      <p class="lead">Trattamenti viso e corpo, massaggi e rituali benessere con prodotti professionali e mani esperte. Un luogo dove rallentare e ritrovarti.</p>
-      <div class="hero-cta">
-        <a class="btn btn-primary" href="prenota.html">Prenota ora</a>
-        <a class="btn btn-outline" href="trattamenti.html">Scopri i trattamenti</a>
-      </div>
-      <div class="hero-micro" id="heroMicro"></div>
+<!-- HERO — full-bleed (stile Twins): foto a tutto schermo + testo centrato -->
+<section class="hero hero-full">
+  <div class="hero-photo"><img id="heroImg" alt="Cabina di un centro estetico, atmosfera di benessere"/></div>
+  <div class="hero-scrim"></div>
+  <div class="hero-inner">
+    <div class="eyebrow" id="heroEyebrow">Centro estetico · Palermo</div>
+    <h1 class="serif" id="heroTitle">Centro estetico <span class="italic">a Palermo</span></h1>
+    <p class="lead" id="heroLead">L'arte del benessere incontra la scienza della bellezza.</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="prenota.html">Prenota ora</a>
+      <a class="btn btn-ghost" href="trattamenti.html">Scopri i trattamenti</a>
     </div>
-    <div class="hero-media reveal-r">
-      <img id="heroImg" alt="Trattamento viso in cabina estetica" width="720" height="900"/>
-      <div class="hero-badge"><b id="heroRating">4,9 / 5</b> · oltre 4.000 clienti soddisfatte</div>
-    </div>
+    <div class="hero-micro" id="heroMicro"></div>
+  </div>
+  <a class="hero-scroll" href="#dopo" aria-label="Scorri verso il basso">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+  </a>
+</section>
+
+<!-- PROMO STRIP -->
+<section id="dopo" class="bg-crema" style="padding-top:clamp(2.5rem,5vw,4rem)">
+  <div class="container">
+    <div class="promo-row" id="promoBox"></div>
   </div>
 </section>
 
@@ -38,27 +43,29 @@
   <div class="container grid-4" id="numeriBox"></div>
 </section>
 
-<!-- CATEGORIE IN EVIDENZA -->
-<section class="bg-crema">
+<!-- MANIFESTO / FILOSOFIA -->
+<section class="bg-crema manifesto">
   <div class="container">
-    <div class="center" style="margin-bottom:3rem">
-      <div class="eyebrow" style="justify-content:center">I nostri trattamenti</div>
-      <h2 class="serif">Un trattamento per ogni <span class="italic">esigenza</span></h2>
-    </div>
-    <div class="grid-3" id="catBox"></div>
-    <div class="center mt2"><a class="btn btn-outline" href="trattamenti.html">Vedi tutti i trattamenti &amp; prezzi</a></div>
+    <div class="eyebrow" style="justify-content:center">La nostra filosofia</div>
+    <p class="quote reveal">Crediamo che la bellezza non sia perfezione. <span class="italic">È riconoscersi allo specchio e sentirsi di nuovo bene con sé stesse.</span></p>
+    <div class="sign reveal d1" id="manifestoSign">— Il team</div>
   </div>
 </section>
 
-<!-- PERCHÉ NOI -->
-<section class="bg-salvia">
-  <div class="container grid-2">
+<!-- I TRATTAMENTI PIÙ RICHIESTI (stile Twins: testo + griglia card immagine 3D) -->
+<section class="bg-crema-2">
+  <div class="container grid-2 treats-grid">
     <div class="reveal">
-      <div class="eyebrow">Perché sceglierci</div>
-      <h2 class="serif">Professionalità, igiene e <span class="italic">prodotti che amiamo</span></h2>
-      <p class="lead mt1" style="opacity:.92">Ogni trattamento segue protocolli rigorosi di igiene e sicurezza. Le nostre estetiste sono qualificate e aggiornate sulle tecniche più efficaci, e lavoriamo solo con marchi professionali selezionati.</p>
+      <div class="eyebrow">I più richiesti</div>
+      <h2 class="serif">I trattamenti <span class="italic">più richiesti</span></h2>
+      <p class="lead mt1">Immaginati in un luogo dove bellezza e benessere si abbracciano per creare un'esperienza indimenticabile: i nostri trattamenti viso e corpo, il rifugio ideale per riscoprire il tuo splendore, dentro e fuori.</p>
+      <div class="why-trust" id="whyTrust"></div>
+      <div class="cta-inline mt2">
+        <a class="btn btn-primary" href="prenota.html">Prenota ora</a>
+        <a class="btn btn-outline" href="trattamenti.html">Scopri tutti i trattamenti</a>
+      </div>
     </div>
-    <div class="grid-2 reveal d1" style="gap:1rem" id="whyBox"></div>
+    <div class="treats-cards" id="catBox"></div>
   </div>
 </section>
 
@@ -73,15 +80,30 @@
   </div>
 </section>
 
-<!-- RECENSIONI -->
+<!-- GALLERIA / LE NOSTRE OSPITI -->
 <section class="bg-crema-2">
   <div class="container">
     <div class="center" style="margin-bottom:3rem">
-      <div class="eyebrow" style="justify-content:center">Dicono di noi</div>
-      <h2 class="serif">Oltre <span class="italic">4.000 clienti</span> soddisfatte</h2>
+      <div class="eyebrow" style="justify-content:center">La nostra gallery</div>
+      <h2 class="serif">Le nostre <span class="italic">ospiti</span></h2>
     </div>
-    <div class="grid-4" id="revBox"></div>
-    <div class="center mt2"><a class="btn btn-outline" href="recensioni.html">Tutte le recensioni</a></div>
+    <div class="gallery" id="galleryBox"></div>
+    <div class="center mt2"><a class="btn btn-outline" href="galleria.html">Vedi tutta la galleria</a></div>
+  </div>
+</section>
+
+<!-- COMMUNITY -->
+<section class="bg-crema">
+  <div class="container">
+    <div class="community reveal">
+      <div>
+        <div class="eyebrow">Entra nella community</div>
+        <h2 class="serif">Coccole, novità e <span class="italic">offerte riservate</span></h2>
+        <p class="lead mt1" style="max-width:42ch">Iscriviti e ricevi consigli di bellezza, anteprime sui nuovi trattamenti e promozioni dedicate a chi ci segue.</p>
+        <div class="mt2"><a class="btn btn-primary" href="contatti.html">Unisciti a noi</a></div>
+      </div>
+      <div class="c-media tilt"><img id="communityImg" alt="Cliente soddisfatta al centro estetico" loading="lazy" width="640" height="480"/></div>
+    </div>
   </div>
 </section>
 
@@ -101,37 +123,59 @@ SITEUI.mount({
   schema: [{ "@context":"https://schema.org", "@type":"WebSite", name: SITE.brand.nome, url: SITE.seo.dominio }],
   onReady() {
     const S = SITE, U = SITEUI;
-    document.getElementById("heroEyebrow").textContent = `${S.brand.claim} · ${S.brand.citta}`;
-    document.getElementById("heroImg").src = U.photo(S.media.hero, 760, 950);
-    document.getElementById("heroRating").textContent = (S.numeri.find(n=>n.valore.includes(","))?.valore || "4,9") + " / 5";
+    const arrow = '<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+
+    document.getElementById("heroEyebrow").textContent = `Centro estetico · ${S.brand.citta}`;
+    document.getElementById("heroTitle").innerHTML = `Centro estetico <span class="italic">a ${S.brand.citta}</span>`;
+    document.getElementById("heroImg").src = U.photo(S.media.hero, 1920, 1280);
     document.getElementById("heroMicro").innerHTML = ["Prenotazione in 30 secondi","Conferma immediata","Disdici fino a 24h prima"]
       .map(t=>`<span>${U.icon("check","ico")} ${t}</span>`).join("");
+    document.getElementById("manifestoSign").textContent = `— ${S.team[0]?.nome || "Il team"}, ${S.brand.nome}`;
+    document.getElementById("communityImg").src = U.photo(S.media.chiSiamo || S.media.ambiente[0], 640, 480);
 
-    document.getElementById("numeriBox").innerHTML = S.numeri.map(n=>`<div class="stat reveal"><div class="v">${n.valore}</div><div class="l">${n.label}</div></div>`).join("");
-
-    document.getElementById("catBox").innerHTML = S.categorie.map((c,i)=>`
-      <a class="cat-card reveal d${(i%3)+1}" href="trattamenti.html#${c.id}">
-        <div class="cc-img"><img src="${U.photo(c.foto,560,420)}" alt="${c.nome}" loading="lazy" width="560" height="420"/></div>
-        <div class="cc-body">
-          <h3 class="serif" style="margin-bottom:.4rem">${c.nome}</h3>
-          <p class="muted">${c.descr}</p>
-          <p class="price small mt1">da ${Math.min(...c.trattamenti.map(t=>t.prezzo))}€</p>
+    // Promo: dai pacchetti reali (i primi 3)
+    const promoFoto = S.media.ambiente.slice(0,3);
+    document.getElementById("promoBox").innerHTML = S.pacchetti.slice(0,3).map((p,i)=>`
+      <a class="promo tilt" href="pacchetti.html">
+        <img src="${U.photo(promoFoto[i] || S.media.ambiente[0],560,420)}" alt="${p.nome}" loading="lazy"/>
+        <div class="promo-body">
+          <span class="pill">${p.durata}</span>
+          <h3 class="serif">${p.nome}</h3>
+          <p>${p.descr}</p>
+          <span class="more">Scopri ${arrow}</span>
         </div>
       </a>`).join("");
 
-    const why = [["shield","Igiene certificata","Sterilizzazione strumenti e materiale monouso ad ogni cliente."],
-                 ["award","Estetiste qualificate","Formazione continua e anni di esperienza al tuo servizio."],
-                 ["leaf","Prodotti professionali","Cosmetici dermatologicamente testati, rispettosi della pelle."],
-                 ["chat","Consulenza su misura","Analisi della pelle e percorso personalizzato per i tuoi obiettivi."]];
-    document.getElementById("whyBox").innerHTML = why.map(([ic,t,d])=>`
-      <div class="card" style="background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.20);color:var(--crema)">
-        <div class="feature-ico">${U.icon(ic)}</div>
-        <h3 class="serif" style="color:var(--crema);margin:.2rem 0 .4rem">${t}</h3>
-        <p style="opacity:.88;font-size:.9rem">${d}</p>
-      </div>`).join("");
+    // Numeri della home: solo fatti neutri (niente recensioni/valutazioni né conteggio clienti)
+    const homeStats = [
+      ["+"+(S.brand.anniAttivita||12), "Anni di attività"],
+      [String(S.categorie.reduce((a,c)=>a+c.trattamenti.length,0)), "Trattamenti in carta"],
+      [String(S.team.length), "Specialiste qualificate"],
+      ["100%", "Igiene certificata"],
+    ];
+    document.getElementById("numeriBox").innerHTML = homeStats.map(([v,l])=>`<div class="stat reveal"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
+
+    // Trattamenti più richiesti: card immagine grandi 3D (stile Twins)
+    document.getElementById("catBox").innerHTML = S.categorie.slice(0,4).map((c,i)=>`
+      <a class="tcard tilt" href="trattamenti.html#${c.id}">
+        <img src="${U.photo(c.foto,620,780)}" alt="${c.nome}" loading="lazy"/>
+        <div class="tcard-body">
+          <h3 class="serif">${c.nome}</h3>
+          <p>${c.descr}</p>
+          <span class="more">Scopri tutto ${arrow}</span>
+        </div>
+      </a>`).join("");
+
+    // Niente valutazioni: solo fatti neutri (esperienza, trattamenti, igiene)
+    const totTratt = S.categorie.reduce((a,c)=>a+c.trattamenti.length,0);
+    document.getElementById("whyTrust").innerHTML = [
+      ["+"+(S.brand.anniAttivita||10), "Anni di esperienza"],
+      [totTratt+"", "Trattamenti in carta"],
+      ["100%", "Igiene certificata"],
+    ].map(([v,l])=>`<div class="wt"><b>${v}</b><span>${l}</span></div>`).join("");
 
     document.getElementById("teamBox").innerHTML = S.team.map((m,i)=>`
-      <div class="member reveal d${(i%3)+1}">
+      <div class="member tilt">
         <div class="member-photo"><img src="${m.foto}" alt="${m.nome}, ${m.ruolo}" loading="lazy" width="400" height="400"/></div>
         <div class="member-body">
           <h3 class="serif" style="margin-bottom:.1rem">${m.nome}</h3>
@@ -141,11 +185,10 @@ SITEUI.mount({
         </div>
       </div>`).join("");
 
-    document.getElementById("revBox").innerHTML = S.recensioni.map((r,i)=>`
-      <div class="review reveal d${(i%4)+1}">
-        <div class="stars">${U.stars(r.voto)}</div>
-        <p class="small">«${r.testo}»</p>
-        <div class="who">${r.nome}</div><div class="src">${r.fonte} · ${r.voto}/5</div>
+    // Galleria ospiti: prime 4 foto ambiente
+    document.getElementById("galleryBox").innerHTML = S.media.ambiente.slice(1,5).map((id,i)=>`
+      <div class="g-item tilt" data-label="Le nostre ospiti">
+        <img src="${U.photo(id,420,420)}" alt="Momento al centro estetico" loading="lazy" width="420" height="420"/>
       </div>`).join("");
   }
 });

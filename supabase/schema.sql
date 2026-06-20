@@ -26,6 +26,9 @@ create table if not exists prenotazioni (
 );
 create index if not exists idx_pren_data on prenotazioni(data, operatrice);
 create index if not exists idx_pren_token on prenotazioni(cancel_token);
+-- Anti doppia-prenotazione: un solo slot ATTIVO per operatrice/giorno/orario.
+-- Se due clienti scelgono lo stesso orario, la seconda insert fallisce (gestita lato app).
+create unique index if not exists uniq_slot_attivo on prenotazioni(data, orario, operatrice) where stato in ('in_attesa', 'confermata');
 
 -- ── BLOCCHI (slot/giorni chiusi manualmente dal centro) ──────────────────────
 create table if not exists blocchi (
@@ -62,6 +65,7 @@ create table if not exists settings (
 insert into settings (key, value) values
   ('nome_attivita',   'Bellezza Studio'),
   ('email_mittente',  'Bellezza Studio <onboarding@resend.dev>'),
+  ('email_titolare',  ''),                  -- dove arrivano gli avvisi di nuova prenotazione
   ('google_place_id', 'YOUR_GOOGLE_PLACE_ID'),
   ('ore_attesa',      '3'),
   ('soglia_stelle',   '4'),
@@ -78,22 +82,189 @@ alter table feedback     enable row level security;
 
 -- Le clienti (anon) possono: creare una prenotazione, leggere SOLO gli orari
 -- occupati (per la disponibilità), inviare un feedback, leggere annunci/blocchi.
+-- NB: tutte le policy usano drop-if-exists + create → lo schema è RI-ESEGUIBILE
+-- senza errori (puoi rilanciarlo quante volte vuoi).
+drop policy if exists "anon insert prenotazioni" on prenotazioni;
 create policy "anon insert prenotazioni" on prenotazioni for insert to anon with check (true);
-create policy "anon read orari"          on prenotazioni for select to anon using (true);
--- NB: per non esporre i dati personali, in produzione crea una VIEW che mostra
--- solo (data, orario, operatrice, stato) e dai il select su quella, non sulla tabella.
+-- NB: l'anon NON può leggere la tabella prenotazioni (niente nome/email/telefono).
+-- Per la disponibilità legge la VISTA `disponibilita` qui sotto, che espone solo
+-- data/orario/operatrice/stato. (Nessuna policy select per anon su prenotazioni.)
 
+-- Vista pubblica disponibilità — solo colonne NON personali.
+-- security_invoker resta OFF (default): la vista gira con i privilegi del proprietario
+-- e bypassa la RLS della tabella, esponendo però soltanto queste 4 colonne.
+create or replace view disponibilita as
+  select data, orario, operatrice, stato
+  from prenotazioni
+  where stato in ('in_attesa', 'confermata');
+grant select on disponibilita to anon, authenticated;
+
+drop policy if exists "anon read blocchi" on blocchi;
 create policy "anon read blocchi"  on blocchi  for select to anon using (true);
+drop policy if exists "anon read annunci" on annunci;
 create policy "anon read annunci"  on annunci  for select to anon using (attivo = true);
+drop policy if exists "anon insert feedback" on feedback;
 create policy "anon insert feedback" on feedback for insert to anon with check (true);
 
 -- Gli admin autenticati hanno accesso completo (gestione dal pannello/dashboard).
+drop policy if exists "auth all prenotazioni" on prenotazioni;
 create policy "auth all prenotazioni" on prenotazioni for all to authenticated using (true) with check (true);
+drop policy if exists "auth all blocchi" on blocchi;
 create policy "auth all blocchi"      on blocchi      for all to authenticated using (true) with check (true);
+drop policy if exists "auth all annunci" on annunci;
 create policy "auth all annunci"      on annunci      for all to authenticated using (true) with check (true);
+drop policy if exists "auth all feedback" on feedback;
 create policy "auth all feedback"     on feedback     for all to authenticated using (true) with check (true);
 
--- Realtime per disponibilità e annunci in tempo reale
-alter publication supabase_realtime add table prenotazioni;
-alter publication supabase_realtime add table blocchi;
-alter publication supabase_realtime add table annunci;
+-- ── DISDETTA SELF-SERVICE via token (sicura) ────────────────────────────────
+-- Il cliente può vedere/annullare SOLO la prenotazione di cui possiede il token
+-- (uuid non indovinabile, inviato nella sua email di conferma). Le funzioni sono
+-- SECURITY DEFINER: girano come proprietario e fanno esattamente questo, senza
+-- dare al pubblico alcun accesso diretto alla tabella prenotazioni.
+create or replace function get_prenotazione_by_token(t uuid)
+returns table (servizio text, data date, orario text, stato text)
+language sql security definer set search_path = public as $$
+  select servizio, data, orario, stato from prenotazioni where cancel_token = t;
+$$;
+revoke all on function get_prenotazione_by_token(uuid) from public;
+grant execute on function get_prenotazione_by_token(uuid) to anon, authenticated;
+
+create or replace function annulla_prenotazione(t uuid)
+returns boolean
+language plpgsql security definer set search_path = public as $$
+declare n int;
+begin
+  update prenotazioni set stato = 'cancellata' where cancel_token = t and stato <> 'cancellata';
+  get diagnostics n = row_count;
+  return n > 0;
+end;
+$$;
+revoke all on function annulla_prenotazione(uuid) from public;
+grant execute on function annulla_prenotazione(uuid) to anon, authenticated;
+
+-- Realtime per disponibilità e annunci in tempo reale (idempotente: controlla
+-- l'appartenenza prima di aggiungere, così il re-run non genera mai errori).
+do $$
+begin
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'prenotazioni') then
+    alter publication supabase_realtime add table prenotazioni; end if;
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'blocchi') then
+    alter publication supabase_realtime add table blocchi; end if;
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'annunci') then
+    alter publication supabase_realtime add table annunci; end if;
+end $$;
+
+-- ============================================================================
+-- AUTOMAZIONI AVANZATE — promemoria appuntamento, riattivazione clienti
+-- dormienti, recupero contatti/chiamate perse.
+-- Aggiunta IDEMPOTENTE: puoi rilanciare l'intero schema senza errori.
+-- Le edge function relative: promemoria, riattivazione, contatto-email.
+-- ============================================================================
+
+-- 1) PROMEMORIA — flag anti-doppio-invio sulla singola prenotazione.
+alter table prenotazioni add column if not exists promemoria_inviato boolean default false;
+
+-- 2) CONTATTI PERSI (recupero chiamate/contatti) ─────────────────────────────
+-- Una visitatrice che non riesce a telefonare (centro chiuso/occupato) lascia
+-- il numero dal sito: il lead viene CATTURATO invece di perdersi. Il titolare
+-- la richiama dal pannello. È la versione "web" del recupero chiamate perse;
+-- per il recupero da centralino vero serve un'integrazione di telefonia
+-- (es. Twilio) che inserisce qui una riga con origine='telefonia'.
+create table if not exists contatti_persi (
+  id          bigint generated by default as identity primary key,
+  created_at  timestamptz default now(),
+  nome        text,
+  telefono    text not null,
+  motivo      text,                          -- cosa desiderava (opzionale)
+  origine     text default 'callback',       -- callback | chiusura | telefonia
+  stato       text default 'nuovo',          -- nuovo | richiamato | chiuso
+  consenso    boolean default false
+);
+create index if not exists idx_contatti_stato on contatti_persi(stato, created_at);
+
+-- 3) RIATTIVAZIONI — log win-back, per rispettare il cooldown anti-spam.
+create table if not exists riattivazioni (
+  id          bigint generated by default as identity primary key,
+  created_at  timestamptz default now(),
+  email       text not null
+);
+create index if not exists idx_riatt_email on riattivazioni(email, created_at);
+
+-- Parametri operativi delle nuove automazioni (letti dalle edge function).
+-- Allineati a config.js → automazioni. Modificabili senza ridistribuire codice.
+insert into settings (key, value) values
+  ('ore_promemoria',          '24'),   -- ore prima dell'appuntamento per il promemoria
+  ('giorni_dormiente',        '60'),   -- inattività oltre cui una cliente è "dormiente"
+  ('cooldown_riattivazione',  '90'),   -- giorni minimi tra due win-back alla stessa cliente
+  ('incentivo_riattivazione', 'uno sconto del 20% sul tuo prossimo trattamento'),
+  ('msg_promemoria',          'Ti aspettiamo per il tuo {trattamento}. A presto!')
+on conflict (key) do nothing;
+
+-- RLS delle nuove tabelle.
+alter table contatti_persi enable row level security;
+alter table riattivazioni  enable row level security;
+-- L'anon può SOLO creare una richiesta di richiamo (un lead). Non legge nulla.
+drop policy if exists "anon insert contatti" on contatti_persi;
+create policy "anon insert contatti" on contatti_persi for insert to anon with check (true);
+-- Il titolare loggato gestisce i contatti persi dal pannello.
+drop policy if exists "auth all contatti" on contatti_persi;
+create policy "auth all contatti" on contatti_persi for all to authenticated using (true) with check (true);
+-- riattivazioni: log interno. Nessun accesso anon; il titolare può consultarlo.
+drop policy if exists "auth all riattivazioni" on riattivazioni;
+create policy "auth all riattivazioni" on riattivazioni for all to authenticated using (true) with check (true);
+
+-- Realtime sui contatti persi: il pannello li vede arrivare in diretta.
+do $$
+begin
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'contatti_persi') then
+    alter publication supabase_realtime add table contatti_persi; end if;
+end $$;
+
+-- ============================================================================
+-- LISTA D'ATTESA / POSTI LAST-MINUTE  +  RICHIESTA NUOVO APPUNTAMENTO
+-- Aggiunta IDEMPOTENTE. Edge function relative: posto-libero, nuovo-appuntamento.
+-- ============================================================================
+
+-- 4) NUOVO APPUNTAMENTO — quanti giorni dopo richiamare la cliente per il
+-- "ritocco", e flag anti-doppio-invio. richiamo_giorni viene impostato dal
+-- front-end dal trattamento (config.js → categorie[].trattamenti[].richiamo);
+-- se NULL la function usa il default da settings.
+alter table prenotazioni add column if not exists richiamo_giorni  int;
+alter table prenotazioni add column if not exists richiamo_inviato boolean default false;
+
+-- 5) LISTA D'ATTESA — chi vuole un giorno pieno lascia il contatto. Quando una
+-- prenotazione viene cancellata, la function `posto-libero` avvisa la prima in
+-- lista che combacia (stesso giorno/operatrice, oppure "qualsiasi").
+create table if not exists liste_attesa (
+  id          bigint generated by default as identity primary key,
+  created_at  timestamptz default now(),
+  nome        text,
+  email       text not null,
+  telefono    text,
+  servizio    text,
+  operatrice  text,                          -- preferita (NULL = qualsiasi)
+  data        date,                          -- giorno preferito (NULL = qualsiasi)
+  stato       text default 'attiva',         -- attiva | avvisata | chiusa
+  consenso    boolean default false
+);
+create index if not exists idx_attesa_match on liste_attesa(stato, data, operatrice);
+
+-- Parametri delle due automazioni (allineati a config.js → automazioni).
+insert into settings (key, value) values
+  ('giorni_nuovo_appuntamento', '30'),  -- default giorni dopo cui proporre il nuovo appuntamento
+  ('msg_nuovo_appuntamento',    'È passato un po'' dal tuo {trattamento}: è il momento giusto per il prossimo appuntamento.')
+on conflict (key) do nothing;
+
+-- RLS lista d'attesa: l'anon può solo iscriversi; il titolare gestisce.
+alter table liste_attesa enable row level security;
+drop policy if exists "anon insert attesa" on liste_attesa;
+create policy "anon insert attesa" on liste_attesa for insert to anon with check (true);
+drop policy if exists "auth all attesa" on liste_attesa;
+create policy "auth all attesa" on liste_attesa for all to authenticated using (true) with check (true);
+
+-- Realtime: il pannello vede la lista d'attesa aggiornarsi in diretta.
+do $$
+begin
+  if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'liste_attesa') then
+    alter publication supabase_realtime add table liste_attesa; end if;
+end $$;
