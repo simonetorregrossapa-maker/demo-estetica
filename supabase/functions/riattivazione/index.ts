@@ -23,6 +23,14 @@ const supabase = createClient(
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY")!;
 const SITE_URL = (Deno.env.get("SITE_URL") ?? "").replace(/\/+$/, "");
 
+// CORS: serve perché oltre al cron (server-side) questa function è chiamata anche
+// dal pannello gestione nel browser ("Invia win-back ora") → il preflight OPTIONS
+// va gestito, altrimenti il browser blocca la richiesta.
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
 function emailHtml(nome: string, attivita: string, ultimoServizio: string, incentivo: string, link: string): string {
   return `
   <div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;color:#2e2a26">
@@ -39,7 +47,9 @@ function emailHtml(nome: string, attivita: string, ultimoServizio: string, incen
   </div>`;
 }
 
-Deno.serve(async () => {
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+
   const { data: settings } = await supabase.from("settings").select("key,value");
   const get = (k: string, def = "") => settings?.find((s: any) => s.key === k)?.value ?? def;
 
@@ -56,7 +66,7 @@ Deno.serve(async () => {
     .select("nome,email,servizio,data")
     .eq("consenso", true)
     .neq("stato", "cancellata");
-  if (error) return new Response(JSON.stringify({ error }), { status: 500 });
+  if (error) return new Response(JSON.stringify({ error }), { status: 500, headers: { ...CORS, "Content-Type": "application/json" } });
 
   type Cliente = { nome: string; email: string; servizio: string; ultima: string };
   const perEmail = new Map<string, Cliente>();
@@ -100,5 +110,5 @@ Deno.serve(async () => {
     }
   }
 
-  return new Response(JSON.stringify({ inviate }), { headers: { "Content-Type": "application/json" } });
+  return new Response(JSON.stringify({ inviate }), { headers: { ...CORS, "Content-Type": "application/json" } });
 });
