@@ -242,7 +242,11 @@ window.SITE = {
     // Promemoria: gentile reminder X ore prima, riduce i no-show.
     promemoria:     { attivo: true, orePrima: 24 },
     // Riattivazione: win-back di chi non torna da troppo tempo, con un incentivo.
+    // finestraAttribuzione: giorni entro cui una riprenotazione dopo il win-back
+    // conta come cliente "riportata dal sistema" (base della success fee). Il
+    // valore reale sta in settings → giorni_attribuzione_riattivazione.
     riattivazione:  { attivo: true, giorniDormiente: 60, cooldownGiorni: 90,
+                      finestraAttribuzione: 14,
                       incentivo: "uno sconto del 20% sul tuo prossimo trattamento" },
     // Recupero contatti persi: cattura il lead che sarebbe una chiamata persa.
     recuperoContatti: {

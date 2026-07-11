@@ -268,3 +268,73 @@ begin
   if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'liste_attesa') then
     alter publication supabase_realtime add table liste_attesa; end if;
 end $$;
+
+-- ============================================================================
+-- ATTRIBUZIONE RIATTIVAZIONI — chiude il loop del win-back.
+-- Serve a DIMOSTRARE (con numeri, non a parole) quante clienti dormienti il
+-- sistema ha davvero riportato: è la base di un'eventuale success fee.
+-- Regola stretta e onesta: una prenotazione conta come "riattivata" SOLO se
+--   1) la cliente era dormiente  → garantito: il win-back parte solo per loro
+--   2) ha ricevuto il win-back   → esiste la riga in `riattivazioni`
+--   3) riprenota entro la finestra `giorni_attribuzione_riattivazione`
+-- Ogni win-back si converte AL PIÙ UNA volta (viene marcato `convertita`), così
+-- il conteggio non gonfia mai: 1 riga convertita = 1 cliente riportata.
+-- Aggiunta IDEMPOTENTE.
+-- ============================================================================
+
+-- Colonne di attribuzione sulla prenotazione che "chiude" il win-back.
+alter table prenotazioni add column if not exists riattivata       boolean default false;
+alter table prenotazioni add column if not exists riattivazione_id bigint references riattivazioni(id);
+
+-- Esito sul log del win-back: convertito? quando?
+alter table riattivazioni add column if not exists convertita  boolean default false;
+alter table riattivazioni add column if not exists converted_at timestamptz;
+create index if not exists idx_riatt_conv on riattivazioni(email, convertita, created_at);
+
+-- Finestra di attribuzione: quanti giorni dopo il win-back una riprenotazione
+-- viene ancora considerata "merito" del sistema. Oltre, non si conta (onestà).
+insert into settings (key, value) values
+  ('giorni_attribuzione_riattivazione', '14')
+on conflict (key) do nothing;
+
+-- Trigger: all'INSERT di una prenotazione, se per la stessa email esiste un
+-- win-back NON ancora convertito ed entro la finestra, attribuisci e chiudi.
+-- SECURITY DEFINER: gira come owner, così può aggiornare `riattivazioni` (RLS)
+-- anche quando la prenotazione arriva dall'anon (che non può scrivere lì).
+create or replace function attribuisci_riattivazione()
+returns trigger
+language plpgsql security definer set search_path = public as $$
+declare
+  finestra int;
+  r_id     bigint;
+begin
+  if new.email is null or btrim(new.email) = '' then
+    return new;
+  end if;
+
+  select coalesce(nullif(value, '')::int, 14) into finestra
+  from settings where key = 'giorni_attribuzione_riattivazione';
+  finestra := coalesce(finestra, 14);
+
+  select id into r_id
+  from riattivazioni
+  where lower(btrim(email)) = lower(btrim(new.email))
+    and convertita = false
+    and created_at >= now() - (finestra || ' days')::interval
+  order by created_at desc
+  limit 1;
+
+  if r_id is not null then
+    new.riattivata       := true;
+    new.riattivazione_id := r_id;
+    update riattivazioni set convertita = true, converted_at = now() where id = r_id;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_attribuisci_riattivazione on prenotazioni;
+create trigger trg_attribuisci_riattivazione
+  before insert on prenotazioni
+  for each row execute function attribuisci_riattivazione();

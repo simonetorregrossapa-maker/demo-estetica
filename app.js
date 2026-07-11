@@ -553,6 +553,11 @@
             <button class="btn btn-primary" id="mgRiattiva" style="justify-content:center">Invia win-back ora</button>
           </div>
           <div class="book-card" style="margin-bottom:1.5rem">
+            <h3 class="serif mb1">Clienti riportate dal sistema</h3>
+            <p class="muted small mb1">Clienti dormienti che hanno riprenotato dopo il win-back (entro ${(S.automazioni && S.automazioni.riattivazione.finestraAttribuzione) || 14} giorni). È il valore misurabile che il sistema ti ha fatto recuperare.</p>
+            <div id="mgRiattivate"></div>
+          </div>
+          <div class="book-card" style="margin-bottom:1.5rem">
             <h3 class="serif mb1">Banner sul sito</h3>
             <p class="muted small mb1">Compare in cima a tutte le pagine del sito. Stato: <strong id="mgBannerStatus">—</strong></p>
             <div class="fld-row"><textarea id="mgBannerText" rows="2" placeholder="Es: Posti last minute oggi pomeriggio — prenota online!"></textarea></div>
@@ -593,6 +598,7 @@
       root.querySelector('.mg-tab[data-tab="contatti"]').addEventListener("click", () => this.loadContatti());
       this.refreshBannerStatus();
       this.loadContatti();
+      this.loadRiattivate();
       this.loadBookings();
     },
 
@@ -811,6 +817,61 @@
         toast(n ? `Win-back inviato a ${n} client${n === 1 ? "e" : "i"}` : "Nessuna cliente dormiente da ricontattare ora", "ok");
       } catch (e) { toast("Errore (verifica l'edge function riattivazione)", "err"); }
       finally { if (btn) { btn.disabled = false; btn.textContent = "Invia win-back ora"; } }
+    },
+
+    /* ── Clienti riportate dal win-back (attribuzione success fee) ─────── */
+    demoRiattivate() {
+      const iso = d => new Date(Date.now() - d * 86400000).toISOString();
+      const day = d => iso(d).slice(0, 10);
+      return [
+        { nome: "Giulia Ferri", servizio: "Massaggio drenante", data: day(-2), created_at: iso(1), riattivazioni: { created_at: iso(4) } },
+        { nome: "Marta Conti",  servizio: "Trattamento anti-age", data: day(-5), created_at: iso(9), riattivazioni: { created_at: iso(12) } },
+      ];
+    },
+    async loadRiattivate() {
+      const box = document.getElementById("mgRiattivate"); if (!box) return;
+      let rows;
+      if (_sb) {
+        try {
+          const { data, error } = await _sb.from("prenotazioni")
+            .select("nome,servizio,data,created_at,riattivazione_id,riattivazioni(created_at)")
+            .eq("riattivata", true)
+            .order("created_at", { ascending: false })
+            .limit(100);
+          if (error) throw error;
+          rows = data || [];
+        } catch (e) { rows = []; }
+      } else { rows = this.demoRiattivate(); }
+      this.renderRiattivate(rows);
+    },
+    renderRiattivate(rows) {
+      const box = document.getElementById("mgRiattivate"); if (!box) return;
+      const d = ts => { try { return new Date(ts).toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" }); } catch (e) { return "—"; } };
+      const now = new Date(), y = now.getFullYear(), m = now.getMonth();
+      const nMese = rows.filter(r => { const t = new Date(r.created_at); return t.getFullYear() === y && t.getMonth() === m; }).length;
+      const mese = now.toLocaleDateString("it-IT", { month: "long" });
+      const badge = `
+        <div class="card" style="display:flex;align-items:baseline;gap:.6rem;margin-bottom:1rem;background:var(--crema-2)">
+          <strong class="serif" style="font-size:1.8rem;line-height:1">${nMese}</strong>
+          <span class="muted small">client${nMese === 1 ? "e riportata" : "i riportate"} a ${mese}</span>
+        </div>`;
+      if (!rows.length) {
+        box.innerHTML = badge + `<p class="muted center" style="padding:1.2rem 0">Ancora nessuna cliente riportata dal win-back. Compaiono qui quando una dormiente riprenota dopo il messaggio.</p>`;
+        return;
+      }
+      box.innerHTML = badge + rows.map(r => {
+        const winback = r.riattivazioni && r.riattivazioni.created_at;
+        return `
+        <div class="card" style="margin-bottom:.7rem;display:flex;gap:1rem;flex-wrap:wrap;align-items:center;justify-content:space-between">
+          <div style="min-width:200px">
+            <strong>${r.nome || "Cliente"}</strong>
+            <p class="muted small" style="margin:.2rem 0 0">${r.servizio || ""}</p>
+          </div>
+          <div class="muted small" style="text-align:right;line-height:1.5">
+            ${winback ? `Win-back: <strong>${d(winback)}</strong> · ` : ""}Riprenotato: <strong>${d(r.created_at)}</strong><br>Appuntamento: ${d(r.data)}
+          </div>
+        </div>`;
+      }).join("");
     },
 
     async logout() { if (_sb) { try { await _sb.auth.signOut(); } catch (e) { } } location.reload(); },
