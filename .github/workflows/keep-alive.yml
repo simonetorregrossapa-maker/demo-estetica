@@ -1,0 +1,36 @@
+name: Supabase keep-alive
+
+# Tiene sveglio il progetto Supabase del sito Torregrossa Studio (centro estetico).
+# Il piano gratuito mette in pausa un progetto dopo ~7 giorni senza richieste:
+# questa action fa una piccola query ogni giorno, cosi' non va mai in pausa
+# anche nei periodi senza prenotazioni ne' visite al sito.
+# La anon key e' la stessa gia' pubblica nel config.js del sito.
+
+on:
+  schedule:
+    - cron: '34 6 * * *'   # ogni giorno alle 06:34 UTC (~08:34 ora italiana)
+  workflow_dispatch:        # permette di lanciarla a mano dalla tab Actions
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST
+        env:
+          SUPABASE_URL: https://ykpujseilqkificwqfnd.supabase.co
+          SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrcHVqc2VpbHFraWZpY3dxZm5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4NjI4NTksImV4cCI6MjA5NzQzODg1OX0.14FEDt1NRYuWLkV8uvbvWS09SR4CaiHES5aB5NkQwDc
+        run: |
+          code=$(curl -sS -o /dev/null -w "%{http_code}" \
+            "$SUPABASE_URL/rest/v1/disponibilita?select=*&limit=1" \
+            -H "apikey: $SUPABASE_ANON_KEY" \
+            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+          echo "Supabase ha risposto: HTTP $code"
+          # qualsiasi risposta 2xx/4xx conta come attivita': il progetto resta sveglio
+          if [ "$code" -ge 500 ]; then
+            echo "Errore lato server, riprovo una volta..."
+            sleep 5
+            curl -sS -o /dev/null -w "retry: HTTP %{http_code}\n" \
+              "$SUPABASE_URL/rest/v1/disponibilita?select=*&limit=1" \
+              -H "apikey: $SUPABASE_ANON_KEY" \
+              -H "Authorization: Bearer $SUPABASE_ANON_KEY"
+          fi
