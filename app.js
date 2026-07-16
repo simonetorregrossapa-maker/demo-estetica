@@ -61,7 +61,7 @@
       const box = document.getElementById("svcSelect"); if (!box) return;
       box.innerHTML = S.categorie.map(c => `
         <optgroup label="${c.nome}">
-          ${c.trattamenti.map(t => `<option value="${t.nome}" ${this.service.nome === t.nome ? "selected" : ""}>${t.nome} · ${t.durata}′ · ${t.prezzo}€</option>`).join("")}
+          ${c.trattamenti.map(t => `<option value="${t.nome}" ${this.service.nome === t.nome ? "selected" : ""}>${t.nome} · ${t.durata}′ · ${SITEUI.prezzo(t.prezzo)}</option>`).join("")}
         </optgroup>`).join("");
       box.onchange = () => { this.service = this.flatTreatments().find(t => t.nome === box.value); this.refreshSummary(); };
     },
@@ -158,14 +158,16 @@
 
     refreshSummary() {
       const s = document.getElementById("bookSummary"); if (!s) return;
-      const acc = S.acconto.attivo ? `<div class="bsum-row"><span class="k">Acconto richiesto</span><span>${Math.round(this.service.prezzo * S.acconto.percentuale / 100)}€</span></div>` : "";
+      // Niente acconto sui trattamenti senza prezzo pubblico: si calcolerebbe su null → "0€".
+      const acc = S.acconto.attivo && typeof this.service.prezzo === "number"
+        ? `<div class="bsum-row"><span class="k">Acconto richiesto</span><span>${Math.round(this.service.prezzo * S.acconto.percentuale / 100)}€</span></div>` : "";
       s.innerHTML = `
         <div class="bsum-row"><span class="k">Trattamento</span><span>${this.service.nome}</span></div>
         <div class="bsum-row"><span class="k">Durata</span><span>${this.service.durata} min</span></div>
         <div class="bsum-row"><span class="k">Operatrice</span><span>${this.op}</span></div>
         <div class="bsum-row"><span class="k">Data</span><span>${this.date ? this.fmt(this.date) : "—"}</span></div>
         <div class="bsum-row"><span class="k">Orario</span><span>${this.time || "—"}</span></div>
-        <div class="bsum-row"><span class="k">Prezzo</span><span class="price">${this.service.prezzo}€</span></div>${acc}`;
+        <div class="bsum-row"><span class="k">Prezzo</span><span class="price">${SITEUI.prezzo(this.service.prezzo)}</span></div>${acc}`;
     },
     fmt(iso) { const [y, m, d] = iso.split("-").map(Number); return `${WD[new Date(y, m - 1, d).getDay()]} ${d} ${MESI[m - 1].toLowerCase()} ${y}`; },
 
@@ -200,14 +202,14 @@
 
         // Notifica al centro (Web3Forms)
         if (I.web3formsKey && I.web3formsKey !== "YOUR_WEB3FORMS_KEY") {
-          await this.w3f(`NUOVA PRENOTAZIONE\n\nCliente: ${name}\nEmail: ${email}\nTel: ${phone || "—"}\n\nTrattamento: ${this.service.nome}\nOperatrice: ${this.op}\nData: ${apptStr}\nOrario: ${this.time}\nPrezzo: ${this.service.prezzo}€\n\nNote: ${notes || "nessuna"}`, name, email);
+          await this.w3f(`NUOVA PRENOTAZIONE\n\nCliente: ${name}\nEmail: ${email}\nTel: ${phone || "—"}\n\nTrattamento: ${this.service.nome}\nOperatrice: ${this.op}\nData: ${apptStr}\nOrario: ${this.time}\nPrezzo: ${SITEUI.prezzo(this.service.prezzo)}\n\nNote: ${notes || "nessuna"}`, name, email);
         }
         // Conferma al cliente (EmailJS)
         if (window.emailjs && I.emailjsTemplate && I.emailjsTemplate !== "YOUR_EMAILJS_TEMPLATE") {
           const cancelUrl = `${location.origin}${location.pathname.replace(/[^/]*$/, "")}annulla.html?token=${token}`;
           await emailjs.send(I.emailjsService, I.emailjsTemplate, {
             to_name: name, to_email: email, servizio: this.service.nome, operatrice: this.op,
-            data: apptStr, orario: this.time, prezzo: this.service.prezzo + "€", durata: this.service.durata + " min",
+            data: apptStr, orario: this.time, prezzo: SITEUI.prezzo(this.service.prezzo), durata: this.service.durata + " min",
             cancel_link: cancelUrl, attivita: S.brand.nome,
           });
         }

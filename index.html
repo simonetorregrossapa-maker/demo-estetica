@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="styles.css?v=5"/>
 <script src="config.js?v=5"></script>
+<script src="clienti.js?v=5"></script>
 <script src="components.js?v=5"></script>
 <script src="app.js?v=5"></script>
 </head>
@@ -47,7 +48,7 @@
 <section class="bg-crema manifesto">
   <div class="container">
     <div class="eyebrow" style="justify-content:center">La nostra filosofia</div>
-    <p class="quote reveal">Crediamo che la bellezza non sia perfezione. <span class="italic">È riconoscersi allo specchio e sentirsi di nuovo bene con sé stesse.</span></p>
+    <p class="quote reveal" id="manifestoP">Crediamo che la bellezza non sia perfezione. <span class="italic">È riconoscersi allo specchio e sentirsi di nuovo bene con sé stesse.</span></p>
     <div class="sign reveal d1" id="manifestoSign">— Il team</div>
   </div>
 </section>
@@ -58,7 +59,7 @@
     <div class="reveal">
       <div class="eyebrow">I più richiesti</div>
       <h2 class="serif">I trattamenti <span class="italic">più richiesti</span></h2>
-      <p class="lead mt1">Immaginati in un luogo dove bellezza e benessere si abbracciano per creare un'esperienza indimenticabile: i nostri trattamenti viso e corpo, il rifugio ideale per riscoprire il tuo splendore, dentro e fuori.</p>
+      <p class="lead mt1" id="introLead">Immaginati in un luogo dove bellezza e benessere si abbracciano per creare un'esperienza indimenticabile: i nostri trattamenti viso e corpo, il rifugio ideale per riscoprire il tuo splendore, dentro e fuori.</p>
       <div class="why-trust" id="whyTrust"></div>
       <div class="cta-inline mt2">
         <a class="btn btn-primary" href="prenota.html">Prenota ora</a>
@@ -125,8 +126,17 @@ SITEUI.mount({
     const S = SITE, U = SITEUI;
     const arrow = '<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
 
-    document.getElementById("heroEyebrow").textContent = `Centro estetico · ${S.brand.citta}`;
-    document.getElementById("heroTitle").innerHTML = `Centro estetico <span class="italic">a ${S.brand.citta}</span>`;
+    const tipo = S.brand.tipo || "Centro estetico";
+    document.getElementById("heroEyebrow").textContent = `${tipo} · ${S.brand.citta}`;
+    // heroTitle: di default l'etichetta neutra ("<tipo> a <città>"). Le schede
+    // possono metterci il nome dell'attività, che a colpo d'occhio è la
+    // differenza tra "demo su misura" e "template con sopra un'etichetta".
+    document.getElementById("heroTitle").innerHTML = S.testi?.heroTitle
+      || `${tipo} <span class="italic">a ${S.brand.citta}</span>`;
+    // Testi che parlano del mestiere: sovrascrivibili per settore (nail, barber…)
+    if (S.testi?.heroLead)  document.getElementById("heroLead").textContent = S.testi.heroLead;
+    if (S.testi?.introLead) document.getElementById("introLead").textContent = S.testi.introLead;
+    if (S.testi?.manifesto) document.getElementById("manifestoP").textContent = S.testi.manifesto;
     document.getElementById("heroImg").src = U.photo(S.media.hero, 1920, 1280);
     document.getElementById("heroMicro").innerHTML = ["Prenotazione in 30 secondi","Conferma immediata","Disdici fino a 24h prima"]
       .map(t=>`<span>${U.icon("check","ico")} ${t}</span>`).join("");
@@ -147,10 +157,14 @@ SITEUI.mount({
       </a>`).join("");
 
     // Numeri della home: solo fatti neutri (niente recensioni/valutazioni né conteggio clienti)
+    // Gli anni si mostrano SOLO se il cliente li ha dichiarati: un default inventato
+    // finirebbe sul demo di un'attività reale come se fosse un suo dato.
     const homeStats = [
-      ["+"+(S.brand.anniAttivita||12), "Anni di attività"],
+      ...(S.brand.anniAttivita > 0 ? [["+"+S.brand.anniAttivita, "Anni di attività"]] : []),
       [String(S.categorie.reduce((a,c)=>a+c.trattamenti.length,0)), "Trattamenti in carta"],
-      [String(S.team.length), "Specialiste qualificate"],
+      // Il conteggio del team si mostra solo se il team è nominativo: quando la
+      // scheda usa una voce collettiva ("Le specialiste"), "1" sarebbe falso.
+      ...(S.team.length > 1 ? [[String(S.team.length), "Specialiste qualificate"]] : []),
       ["100%", "Igiene certificata"],
     ];
     document.getElementById("numeriBox").innerHTML = homeStats.map(([v,l])=>`<div class="stat reveal"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
@@ -169,7 +183,7 @@ SITEUI.mount({
     // Niente valutazioni: solo fatti neutri (esperienza, trattamenti, igiene)
     const totTratt = S.categorie.reduce((a,c)=>a+c.trattamenti.length,0);
     document.getElementById("whyTrust").innerHTML = [
-      ["+"+(S.brand.anniAttivita||10), "Anni di esperienza"],
+      ...(S.brand.anniAttivita > 0 ? [["+"+S.brand.anniAttivita, "Anni di esperienza"]] : []),
       [totTratt+"", "Trattamenti in carta"],
       ["100%", "Igiene certificata"],
     ].map(([v,l])=>`<div class="wt"><b>${v}</b><span>${l}</span></div>`).join("");
@@ -181,7 +195,7 @@ SITEUI.mount({
           <h3 class="serif" style="margin-bottom:.1rem">${m.nome}</h3>
           <p class="muted small" style="margin-bottom:.6rem">${m.ruolo}</p>
           <p class="small">${m.bio}</p>
-          <p class="pill" style="margin-top:.8rem">${m.esperienza} di esperienza</p>
+          ${m.esperienza ? `<p class="pill" style="margin-top:.8rem">${m.esperienza} di esperienza</p>` : ""}
         </div>
       </div>`).join("");
 

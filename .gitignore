@@ -1,2 +1,7 @@
 .DS_Store
 node_modules/
+note-outreach.md
+.claude/
+.claude-flow/
+.DS_Store
+simulatore-automazioni.html

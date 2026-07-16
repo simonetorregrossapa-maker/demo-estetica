@@ -13,6 +13,7 @@ window.SITE = {
   brand: {
     nome:        "Torregrossa Studio",
     claim:       "Istituto di bellezza & SPA urbana",
+    tipo:        "Centro estetico",   // usato nell'hero e nell'occhiello ("<tipo> a <città>")
     citta:       "Palermo",
     provincia:   "PA",
     cap:         "90144",

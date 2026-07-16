@@ -30,7 +30,26 @@
 
   /* ── Personalizzazione DEMO via URL (?nome=&citta=&tel=&indirizzo=...) ── */
   const qp = new URLSearchParams(location.search);
-  const isDemo = qp.has("nome");
+
+  /* Scheda cliente completa (?c=slug → clienti.js): sovrascrive config.js in
+     profondità. Oggetti fusi ricorsivamente, array e valori sostituiti interi
+     (così `categorie` diventa quella del cliente, non un ibrido col default).
+     Gira PRIMA degli override singoli qui sotto, che restano l'ultima parola. */
+  (function scheda() {
+    const slug = qp.get("c");
+    if (!slug) return;
+    const dati = (window.CLIENTI || {})[slug];
+    if (!dati) { console.warn("Scheda cliente non trovata:", slug); return; }
+    (function fondi(dest, src) {
+      Object.entries(src).forEach(([k, v]) => {
+        const merge = v && typeof v === "object" && !Array.isArray(v) &&
+                      dest[k] && typeof dest[k] === "object" && !Array.isArray(dest[k]);
+        if (merge) fondi(dest[k], v); else dest[k] = v;
+      });
+    })(S, dati);
+  })();
+
+  const isDemo = qp.has("nome") || qp.has("c");
   if (qp.get("nome"))       S.brand.nome = qp.get("nome");
   if (qp.get("citta"))      S.brand.citta = qp.get("citta");
   if (qp.get("indirizzo"))  S.brand.indirizzo = qp.get("indirizzo");
@@ -76,6 +95,10 @@
   // Costruisce l'URL di una foto (Unsplash id verificato, o percorso /assets locale)
   const photo = (id, w, h) => id && id.startsWith("/") ? id
     : `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&q=70&w=${w || 900}${h ? "&h=" + h : ""}`;
+
+  // Prezzo: non tutti i trattamenti ne hanno uno pubblico (i macchinari si
+  // vendono a percorso, dopo consulenza). Senza guardia usciva "null€".
+  const prezzo = (v) => typeof v === "number" ? `${v}€` : "su valutazione";
 
   // Icone SVG line (stroke 1.5, set coerente — niente emoji)
   const ICON_PATHS = {
@@ -188,7 +211,12 @@
       <div>
         <div class="foot-logo">${S.brand.nome}</div>
         <p style="opacity:.8;max-width:34ch;font-size:.9rem">${S.brand.claim} a ${S.brand.citta}. Bellezza, cura e benessere con prodotti professionali e mani esperte.</p>
-        <p style="margin-top:1rem;font-size:.84rem">${S.social.instagram ? `<a href="${S.social.instagram}" target="_blank" rel="noopener">Instagram</a> · ` : ""}${S.social.facebook ? `<a href="${S.social.facebook}" target="_blank" rel="noopener">Facebook</a>` : ""}</p>
+        <p style="margin-top:1rem;font-size:.84rem">${
+          [["Instagram", S.social.instagram], ["Facebook", S.social.facebook], ["TikTok", S.social.tiktok]]
+            .filter(([, url]) => url)
+            .map(([nome, url]) => `<a href="${url}" target="_blank" rel="noopener">${nome}</a>`)
+            .join(" · ")
+        }</p>
       </div>
       <div><h4>Esplora</h4><ul>
         <li><a href="${base}trattamenti.html">Trattamenti</a></li>
@@ -206,7 +234,7 @@
       <div><h4>Orari</h4><ul style="font-size:.84rem">${orari}</ul></div>
     </div>
     <div class="foot-bottom">
-      <span>© ${new Date().getFullYear()} ${S.legal.titolare} · P.IVA ${S.legal.pIva}</span>
+      <span>© ${new Date().getFullYear()} ${S.legal.titolare}${S.legal.pIva ? " · P.IVA " + S.legal.pIva : ""}</span>
       <span><a href="${base}privacy.html">Privacy</a> · <a href="${base}cookie.html">Cookie</a> · <a href="${base}termini.html">Termini</a></span>
     </div>`;
     document.body.appendChild(f);
@@ -366,9 +394,33 @@
       .catch(() => { if (settled) return; settled = true; clearTimeout(fallback); revealNow(); });
   }
 
+  /* Propaga i parametri demo (?c=slug e gli override singoli) su TUTTI i link
+     interni. Senza questo, il prospect che clicca "Prenota" o cambia pagina
+     esce dalla sua scheda e si ritrova il template di default: il demo si
+     smonta da solo alla prima navigazione. Gira dopo il render, così prende
+     anche i link generati dalle pagine (card, "Prenota" dei trattamenti…). */
+  const PARAM_DEMO = ["c", "nome", "citta", "indirizzo", "quartiere", "cap", "tel", "wa"];
+  function propagaDemo() {
+    const attivi = PARAM_DEMO.filter(k => qp.has(k));
+    if (!attivi.length) return;
+    document.querySelectorAll("a[href]").forEach(a => {
+      const href = a.getAttribute("href");
+      if (!href || /^(https?:|mailto:|tel:|javascript:|#)/i.test(href)) return;
+      // Si lavora sulla stringa, non su new URL(): quello normalizza in path
+      // assoluto ("../index.html" → "/index.html") e su GitHub Pages, dove il
+      // sito sta in un sottopercorso, ogni link finirebbe 404.
+      const [senzaHash, hash] = href.split("#");
+      const [path, query] = senzaHash.split("?");
+      const params = new URLSearchParams(query || "");
+      // I parametri già sul link vincono (es. ?trattamento=…).
+      attivi.forEach(k => { if (!params.has(k)) params.set(k, qp.get(k)); });
+      a.setAttribute("href", path + "?" + params.toString() + (hash ? "#" + hash : ""));
+    });
+  }
+
   /* ── API pubblica ─────────────────────────────────────────────────── */
   window.SITEUI = {
-    S, waLink, telLink, indirizzoFull, isDemo, photo, icon, stars,
+    S, waLink, telLink, indirizzoFull, isDemo, photo, icon, stars, prezzo,
     mount(page) {
       page = page || {};
       const base = page.base || "";
@@ -379,6 +431,7 @@
         footer(base);
         if (page.onReady) page.onReady();   // pagine iniettano i loro .reveal qui…
         extras(base, page);                  // FAB, cookie, banner demo
+        propagaDemo();                       // …poi ?c= finisce su ogni link interno
         initMotion();                        // …poi GSAP rivela e anima tutto
         initTilt();                          // effetto 3D sulle card (indip. da GSAP)
       });

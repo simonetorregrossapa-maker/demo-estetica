@@ -4,64 +4,262 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <meta name="robots" content="noindex"/>
-<title>Genera Link Demo — Bellezza Studio</title>
+<title>Genera demo cliente — strumento interno</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="styles.css"/>
 <script src="config.js"></script>
+<script src="clienti.js"></script>
 </head>
-<body style="background:var(--crema-2);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem 1rem">
-<!-- STRUMENTO COMMERCIALE: genera un link demo personalizzato col nome del
-     potenziale cliente (i parametri URL ribrandizzano il sito al volo) e lo
-     invia su WhatsApp. Stessa logica del sito barbieri. -->
-<div class="card" style="max-width:540px;width:100%">
-  <div class="eyebrow">Strumento commerciale</div>
-  <h2 class="serif" style="margin-bottom:.3rem">Genera link demo personalizzato</h2>
-  <p class="muted small mb1">Compila i campi: il link si aggiorna in tempo reale.</p>
+<body style="background:var(--crema-2);min-height:100vh;padding:2rem 1rem">
+<!-- STRUMENTO COMMERCIALE INTERNO — non fa parte del sito del cliente.
+     Compili i dati reali dell'attività → ottieni (1) la scheda già formattata
+     da incollare in clienti.js e (2) il link demo ?c=slug da mostrare nel video.
+     Il demo si guarda nel VIDEO: il link nudo non si manda nel primo messaggio. -->
+<div style="max-width:900px;margin:0 auto">
 
-  <div class="fld-row"><label class="fld">Nome centro estetico *</label><input id="g_nome" placeholder="es. Estetica Aurora" oninput="agg()"/></div>
-  <div class="grid-2" style="gap:1rem">
-    <div class="fld-row"><label class="fld">Città</label><input id="g_citta" placeholder="es. Catania" oninput="agg()"/></div>
-    <div class="fld-row"><label class="fld">Quartiere</label><input id="g_quartiere" placeholder="es. Borgo" oninput="agg()"/></div>
-  </div>
-  <div class="fld-row"><label class="fld">Indirizzo</label><input id="g_indirizzo" placeholder="es. Via Etnea 100" oninput="agg()"/></div>
-  <div class="grid-2" style="gap:1rem">
-    <div class="fld-row"><label class="fld">CAP</label><input id="g_cap" placeholder="es. 95131" oninput="agg()"/></div>
-    <div class="fld-row"><label class="fld">Telefono (senza +39)</label><input id="g_tel" placeholder="es. 095 1234567" oninput="agg()"/></div>
+  <div class="card mb1">
+    <div class="eyebrow">Strumento interno</div>
+    <h2 class="serif" style="margin-bottom:.3rem">Genera demo cliente</h2>
+    <p class="muted small">Compila con i dati <strong>veri e pubblici</strong> dell'attività. Prezzi e trattamenti vanno presi dal loro listino: se non li trovi, lasciali vuoti — meglio un campo in meno che un prezzo inventato.</p>
   </div>
 
-  <div class="card" id="result" style="display:none;background:var(--crema-2);border-left:3px solid var(--rosa)">
-    <p class="fld" style="margin-bottom:.5rem">Link personalizzato</p>
+  <div class="card mb1">
+    <div class="eyebrow">1 · Identità</div>
+    <div class="fld-row"><label class="fld">Nome attività *</label><input id="g_nome" placeholder="es. Yuimii Nail" oninput="agg()"/></div>
+    <div class="fld-row"><label class="fld">Slug (id nel link) *</label><input id="g_slug" placeholder="es. yumii-nail" oninput="slugTouched=true;agg()"/></div>
+    <div class="fld-row"><label class="fld">Claim / sottotitolo</label><input id="g_claim" placeholder="es. Unghie & epilazione — San Giacomo, Trieste" oninput="agg()"/></div>
+    <div class="grid-2" style="gap:1rem">
+      <div class="fld-row"><label class="fld">Città</label><input id="g_citta" placeholder="es. Trieste" oninput="agg()"/></div>
+      <div class="fld-row"><label class="fld">Quartiere</label><input id="g_quartiere" placeholder="es. San Giacomo" oninput="agg()"/></div>
+    </div>
+    <div class="grid-2" style="gap:1rem">
+      <div class="fld-row"><label class="fld">Indirizzo</label><input id="g_indirizzo" placeholder="es. Via dell'Istria 4" oninput="agg()"/></div>
+      <div class="fld-row"><label class="fld">CAP</label><input id="g_cap" placeholder="es. 34137" oninput="agg()"/></div>
+    </div>
+    <div class="grid-2" style="gap:1rem">
+      <div class="fld-row"><label class="fld">Provincia</label><input id="g_provincia" placeholder="es. TS" oninput="agg()"/></div>
+      <div class="fld-row"><label class="fld">Instagram (senza @)</label><input id="g_ig" placeholder="es. yumii.nail_" oninput="agg()"/></div>
+    </div>
+    <div class="grid-2" style="gap:1rem">
+      <div class="fld-row"><label class="fld">Tipo attività (per il titolo SEO)</label><input id="g_tipo" placeholder="es. Nail Salon" oninput="agg()"/></div>
+      <div class="fld-row"><label class="fld">Anno apertura</label><input id="g_anno" placeholder="es. 2024" oninput="agg()"/></div>
+    </div>
+    <p class="muted small">P.IVA e ragione sociale: si lasciano fuori. Non sono pubbliche e nel demo non servono — il footer le omette da solo.</p>
+  </div>
+
+  <div class="card mb1">
+    <div class="eyebrow">2 · Contatti</div>
+    <div class="grid-2" style="gap:1rem">
+      <div class="fld-row"><label class="fld">Telefono (display)</label><input id="g_tel" placeholder="es. 040 233 5967" oninput="agg()"/></div>
+      <div class="fld-row"><label class="fld">WhatsApp (solo cifre, con 39)</label><input id="g_wa" placeholder="es. 393395719649" oninput="agg()"/></div>
+    </div>
+    <div class="fld-row"><label class="fld">Email</label><input id="g_email" placeholder="opzionale" oninput="agg()"/></div>
+  </div>
+
+  <div class="card mb1">
+    <div class="eyebrow">3 · Orari</div>
+    <div class="fld-row"><label class="fld">Testo orari — una riga per fascia: <code>Giorni | Orario</code></label>
+      <textarea id="g_orari" rows="3" placeholder="Lunedì — Sabato | 09:00 – 20:00 (orario continuato)&#10;Domenica | Chiuso" oninput="agg()"></textarea></div>
+    <div class="grid-2" style="gap:1rem">
+      <div class="fld-row"><label class="fld">Giorni di chiusura (0=Dom … 6=Sab)</label><input id="g_chiusi" placeholder="es. 0 oppure 0,1" oninput="agg()"/></div>
+      <div class="fld-row"><label class="fld">Slot prenotabili: da–a (ogni 30')</label><input id="g_slotrange" placeholder="es. 09:00-20:00" oninput="agg()"/></div>
+    </div>
+    <p class="muted small">Pausa pranzo? Due fasce separate da virgola: <code>09:00-13:00, 15:00-19:30</code></p>
+  </div>
+
+  <div class="card mb1">
+    <div class="eyebrow">4 · Servizi e prezzi</div>
+    <p class="muted small mb1">Riga <code>== Nome categoria</code>, poi i trattamenti: <code>Nome | durata | prezzo | descrizione</code></p>
+    <div class="fld-row"><textarea id="g_serv" rows="10" placeholder="== Unghie&#10;Manicure classica | 40 | 20 | Cura delle cuticole, limatura e smalto a scelta.&#10;Semipermanente | 60 | 30 | Smalto ad alta tenuta, fino a 3 settimane.&#10;&#10;== Ceretta&#10;Gambe complete | 40 | 25 | Epilazione gambe intere." oninput="agg()"></textarea></div>
+  </div>
+
+  <div class="card mb1">
+    <div class="eyebrow">5 · Testi della home</div>
+    <p class="muted small mb1">Il template parla di viso, corpo e SPA. Se il cliente fa altro (unghie, capelli…), riscrivi queste tre righe o il demo suona finto.</p>
+    <div class="fld-row"><label class="fld">Sotto-titolo hero</label><input id="g_heroLead" placeholder="es. Manicure, semipermanente e ricostruzione. Prenoti in trenta secondi." oninput="agg()"/></div>
+    <div class="fld-row"><label class="fld">Intro sezione trattamenti</label><input id="g_introLead" placeholder="es. Unghie curate nel dettaglio, epilazione e pedicure." oninput="agg()"/></div>
+    <div class="fld-row"><label class="fld">Frase filosofia</label><input id="g_manifesto" placeholder="es. Le mani si notano prima di tutto il resto." oninput="agg()"/></div>
+  </div>
+
+  <div class="card mb1">
+    <div class="eyebrow">6 · Colori</div>
+    <div class="grid-2" style="gap:1rem">
+      <div class="fld-row"><label class="fld">Preset</label>
+        <select id="g_tema" onchange="agg()">
+          <option value="">— lascia quello del template (bronzo/crema) —</option>
+          <option value="nail">Nail bar (rosa cipria + grafite)</option>
+          <option value="verde">Beauty naturale (salvia + crema)</option>
+          <option value="nero">Minimal (nero + bianco)</option>
+        </select>
+      </div>
+      <div class="fld-row"><label class="fld">&nbsp;</label><a class="btn btn-outline" id="prevBtn" target="_blank" style="justify-content:center">Anteprima demo</a></div>
+    </div>
+  </div>
+
+  <div class="card mb1" id="outCard" style="display:none;border-left:3px solid var(--rosa)">
+    <div class="eyebrow">7 · Scheda da incollare in <code>clienti.js</code></div>
+    <p class="muted small mb1">Incolla dentro <code>window.CLIENTI = { … }</code>, poi ricarica.</p>
+    <pre id="outCode" style="background:#fff;padding:1rem;border-radius:4px;overflow:auto;max-height:340px;font-size:.7rem;line-height:1.5"></pre>
+    <button class="btn btn-primary" onclick="copiaCode()" id="codeBtn">Copia scheda</button>
+  </div>
+
+  <div class="card" id="result" style="display:none;background:var(--crema-2);border-left:3px solid var(--rosa-dark)">
+    <div class="eyebrow">8 · Link demo</div>
     <div style="display:flex;gap:.6rem;align-items:center;background:#fff;padding:.6rem .8rem;border-radius:4px;margin-bottom:.8rem">
       <span id="linkText" class="small" style="flex:1;word-break:break-all;color:var(--rosa-dark)"></span>
       <button class="btn btn-primary" style="padding:.4rem .8rem;font-size:.6rem" onclick="copia()" id="copyBtn">Copia</button>
     </div>
+    <p class="muted small mb1"><strong>Il link non si manda nel primo messaggio.</strong> Serve a te per registrare il video: il demo lo mostri tu, condividendo lo schermo. Il messaggio chiede solo il permesso di mandare il video.</p>
+    <div class="fld-row"><label class="fld">Primo messaggio (adatta la riga di dove l'hai trovata)</label><textarea id="g_msg" rows="11" oninput="aggMsg()"></textarea></div>
     <a class="btn btn-wa" id="waBtn" style="width:100%;justify-content:center" target="_blank" rel="noopener">Apri in WhatsApp</a>
-    <a class="btn btn-outline mt1" id="prevBtn" style="width:100%;justify-content:center" target="_blank">Anteprima sito</a>
   </div>
 </div>
 
 <script>
 const BASE = location.origin + location.pathname.replace(/genera-link\.html$/, "index.html");
-function v(id){ return document.getElementById(id).value.trim(); }
-function buildLink(){
-  if(!v("g_nome")) return null;
-  const p=new URLSearchParams();
-  p.set("nome", v("g_nome"));
-  ["citta","quartiere","indirizzo","cap","tel"].forEach(k=>{ if(v("g_"+k)) p.set(k, v("g_"+k)); });
-  return BASE + "?" + p.toString();
+let slugTouched = false;
+const v = id => (document.getElementById(id).value || "").trim();
+const slugify = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+  .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+const TEMI = {
+  nail:  { "rosa":"#b0567a","rosa-light":"#fdeef3","rosa-dark":"#8d3f5f","salvia":"#c9aab4","salvia-dark":"#2a2126",
+           "crema":"#ffffff","crema-2":"#fcf7f8","sabbia":"#efe2e7","carbone":"#1a1a1a","grigio":"#6f6169",
+           "gold":"#d9a8b8","gold-dark":"#8d3f5f" },
+  verde: { "rosa":"#5f7a63","rosa-light":"#eef3ee","rosa-dark":"#3f5943","salvia":"#a8b8a4","salvia-dark":"#242a24",
+           "crema":"#ffffff","crema-2":"#f7faf6","sabbia":"#e3e9e0","carbone":"#1a1a1a","grigio":"#616b60",
+           "gold":"#a8b8a4","gold-dark":"#3f5943" },
+  nero:  { "rosa":"#2c2c2c","rosa-light":"#f2f2f2","rosa-dark":"#000000","salvia":"#b3b3b3","salvia-dark":"#111111",
+           "crema":"#ffffff","crema-2":"#fafafa","sabbia":"#e5e5e5","carbone":"#0a0a0a","grigio":"#666666",
+           "gold":"#b3b3b3","gold-dark":"#2c2c2c" },
+};
+
+// "09:00-13:00, 15:00-19:30" → slot ogni 30'
+function slots(txt){
+  const out = [];
+  txt.split(",").forEach(r => {
+    const m = r.trim().match(/^(\d{1,2}):(\d{2})\s*[-–]\s*(\d{1,2}):(\d{2})$/); if (!m) return;
+    let t = (+m[1]) * 60 + (+m[2]); const fine = (+m[3]) * 60 + (+m[4]);
+    while (t < fine) { out.push(String(Math.floor(t/60)).padStart(2,"0") + ":" + String(t%60).padStart(2,"0")); t += 30; }
+  });
+  return out;
 }
+
+// "== Unghie" + "Nome | durata | prezzo | descr" → categorie[]
+function categorie(txt){
+  const cats = []; let cur = null;
+  const FOTO = "1607779097040-26e80aa78e66";
+  txt.split("\n").forEach(riga => {
+    const r = riga.trim(); if (!r) return;
+    if (r.startsWith("==")) {
+      const nome = r.replace(/^==\s*/, "");
+      cur = { id: slugify(nome), nome, foto: FOTO, descr: "", trattamenti: [] };
+      cats.push(cur); return;
+    }
+    if (!cur) { cur = { id:"servizi", nome:"Servizi", foto:FOTO, descr:"", trattamenti:[] }; cats.push(cur); }
+    const p = r.split("|").map(x => x.trim());
+    if (!p[0]) return;
+    const t = { nome: p[0] };
+    if (p[1] && !isNaN(+p[1])) t.durata = +p[1];
+    if (p[2] && !isNaN(+p[2])) t.prezzo = +p[2];
+    if (p[3]) t.descr = p[3];
+    cur.trattamenti.push(t);
+  });
+  return cats;
+}
+
+function scheda(){
+  const o = {};
+  const brand = {};
+  if (v("g_nome"))      brand.nome = v("g_nome");
+  if (v("g_claim"))     brand.claim = v("g_claim");
+  if (v("g_tipo"))      brand.tipo = v("g_tipo");   // guida hero e occhiello
+  if (v("g_anno"))      brand.anniAttivita = Math.max(1, new Date().getFullYear() - (+v("g_anno") || new Date().getFullYear()));
+  if (v("g_citta"))     brand.citta = v("g_citta");
+  if (v("g_provincia")) brand.provincia = v("g_provincia");
+  if (v("g_cap"))       brand.cap = v("g_cap");
+  if (v("g_indirizzo")) brand.indirizzo = v("g_indirizzo");
+  if (v("g_quartiere")) brand.quartiere = v("g_quartiere");
+  if (Object.keys(brand).length) o.brand = brand;
+
+  const c = {};
+  if (v("g_tel"))   { c.telDisplay = "+39 " + v("g_tel"); c.telHref = "+39" + v("g_tel").replace(/\s/g,""); }
+  if (v("g_wa"))    c.whatsapp = v("g_wa");
+  if (v("g_email")) c.email = v("g_email");
+  if (v("g_ig"))    c.instagram = v("g_ig");
+  if (v("g_nome") && v("g_indirizzo"))
+    c.mapsQuery = `${v("g_nome")}, ${v("g_indirizzo")}, ${v("g_cap")} ${v("g_citta")}`.replace(/\s+/g," ").trim();
+  if (Object.keys(c).length) o.contatti = c;
+
+  const or = {};
+  if (v("g_chiusi")) or.chiusoGiorni = v("g_chiusi").split(",").map(x => +x.trim()).filter(x => !isNaN(x));
+  if (v("g_orari")) or.testo = v("g_orari").split("\n").filter(r => r.trim()).map(r => {
+    const p = r.split("|"); return { g: (p[0]||"").trim(), o: (p[1]||"").trim() };
+  });
+  if (v("g_slotrange")) { const s = slots(v("g_slotrange")); if (s.length) or.slot = s; }
+  if (Object.keys(or).length) o.orari = or;
+
+  // SEO: senza questo il demo resterebbe "Centro Estetico a Palermo" del template.
+  if (v("g_tipo") && v("g_citta"))
+    o.seo = { titleSuffix: `${v("g_tipo")} a ${v("g_citta")}`, dominio: "", ogImage: "/assets/og-cover.jpg" };
+
+  // Legal: titolare = nome attività, P.IVA vuota (mai inventarla).
+  if (v("g_nome"))
+    o.legal = { titolare: v("g_nome"), pIva: "", annoInizio: +v("g_anno") || new Date().getFullYear(), emailPrivacy: v("g_email") || "" };
+
+  const t = {};
+  if (v("g_heroLead"))  t.heroLead = v("g_heroLead");
+  if (v("g_introLead")) t.introLead = v("g_introLead");
+  if (v("g_manifesto")) t.manifesto = v("g_manifesto");
+  if (Object.keys(t).length) o.testi = t;
+
+  if (v("g_tema") && TEMI[v("g_tema")]) o.tema = { colori: TEMI[v("g_tema")] };
+  if (v("g_serv")) { const cats = categorie(v("g_serv")); if (cats.length) o.categorie = cats; }
+  return o;
+}
+
+const MSG_BASE =
+`Ciao, mi chiamo Simone Torregrossa
+So che ti scriveranno in tanti ogni giorno, quindi vado dritto al punto
+Ho preparato un video per te
+So che può sembrare strano, ti spiego
+Stavo scrollando i reels, e mi è apparso uno dei tuoi.
+Da lì, mi è venuta un'idea un po' particolare che volevo condividerti
+Ho preparato un video di meno di 5 minuti dove te ne parlo
+Non ti chiedo nulla in cambio e non voglio venderti nulla
+Semplicemente, mi farebbe piacere sapere che ne pensi, anche perché sono sicuro ti possa tornare utile. Fammi sapere, a presto`;
+
 function agg(){
-  const link=buildLink(); if(!link){ document.getElementById("result").style.display="none"; return; }
-  document.getElementById("result").style.display="block";
-  document.getElementById("linkText").textContent=link;
-  document.getElementById("prevBtn").href=link;
-  const nome=v("g_nome");
-  const msg=`Ciao! Ho visto ${nome} su Google\n\nQuanto tempo passate al telefono per fissare gli appuntamenti? Con un sito così le clienti prenotano da sole, ricevono conferma e promemoria automatici — e dopo il trattamento parte da sola la richiesta di recensione su Google\n\nHo già preparato una demo col vostro nome\n\n${link.replace(/&/g,"%26")}\n\nVi va se ne parliamo 5 minuti?`;
-  document.getElementById("waBtn").href="https://wa.me/?text="+encodeURIComponent(msg);
-  document.getElementById("copyBtn").textContent="Copia";
+  if (!slugTouched && v("g_nome")) document.getElementById("g_slug").value = slugify(v("g_nome"));
+  const slug = v("g_slug") || slugify(v("g_nome"));
+  const ok = !!(v("g_nome") && slug);
+  document.getElementById("result").style.display  = ok ? "block" : "none";
+  document.getElementById("outCard").style.display = ok ? "block" : "none";
+  if (!ok) return;
+
+  const link = BASE + "?c=" + encodeURIComponent(slug);
+  document.getElementById("linkText").textContent = link;
+  document.getElementById("prevBtn").href = link;
+  document.getElementById("outCode").textContent =
+    `  "${slug}": ` + JSON.stringify(scheda(), null, 2).split("\n").join("\n  ") + ",";
+  document.getElementById("codeBtn").textContent = "Copia scheda";
+  document.getElementById("copyBtn").textContent = "Copia";
+
+  const msg = document.getElementById("g_msg");
+  if (!msg.dataset.touched) msg.value = MSG_BASE;
+  aggWa();
 }
-function copia(){ navigator.clipboard.writeText(document.getElementById("linkText").textContent).then(()=>{ const b=document.getElementById("copyBtn"); b.textContent="Copiato!"; setTimeout(()=>b.textContent="Copia",1600); }); }
+function aggMsg(){ document.getElementById("g_msg").dataset.touched = "1"; aggWa(); }
+function aggWa(){
+  document.getElementById("waBtn").href =
+    "https://wa.me/" + v("g_wa") + "?text=" + encodeURIComponent(document.getElementById("g_msg").value);
+}
+function copia(){ navigator.clipboard.writeText(document.getElementById("linkText").textContent)
+  .then(() => flash("copyBtn", "Copiato!", "Copia")); }
+function copiaCode(){ navigator.clipboard.writeText(document.getElementById("outCode").textContent)
+  .then(() => flash("codeBtn", "Copiata!", "Copia scheda")); }
+function flash(id, a, b){ const el = document.getElementById(id); el.textContent = a; setTimeout(() => el.textContent = b, 1600); }
 </script>
 </body>
 </html>

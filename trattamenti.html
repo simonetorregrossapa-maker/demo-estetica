@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="styles.css"/>
 <script src="config.js"></script>
+<script src="clienti.js"></script>
 <script src="components.js"></script>
 <script src="app.js"></script>
 </head>
@@ -37,11 +38,12 @@ SITEUI.mount({
   active: "trattamenti.html",
   title: "Trattamenti & Prezzi",
   description: "Listino completo dei trattamenti: viso, corpo, epilazione, mani e piedi, massaggi. Durata e prezzi trasparenti. Prenota online.",
+  // offers solo se il prezzo è pubblico: dichiarare price:null è schema invalido.
   schema: SITE.categorie.flatMap(c => c.trattamenti.map(t => ({
     "@context":"https://schema.org","@type":"Service", name: t.nome, serviceType: c.nome,
     provider: { "@type":"BeautySalon", name: SITE.brand.nome },
     areaServed: SITE.brand.citta, description: t.descr,
-    offers: { "@type":"Offer", price: t.prezzo, priceCurrency:"EUR" }
+    ...(typeof t.prezzo === "number" ? { offers: { "@type":"Offer", price: t.prezzo, priceCurrency:"EUR" } } : {})
   }))),
   onReady() {
     const S = SITE;
@@ -61,7 +63,7 @@ SITEUI.mount({
               <div class="t-meta" style="display:inline-flex;align-items:center;gap:.35rem;margin-top:.3rem">${U.icon("clock","ico-sm")} ${t.durata} min</div>
             </div>
             <div style="text-align:right;display:flex;flex-direction:column;gap:.5rem;align-items:flex-end">
-              <span class="t-price">${t.prezzo}€</span>
+              <span class="t-price">${U.prezzo(t.prezzo)}</span>
               <a class="btn btn-primary" style="padding:.5rem 1rem;font-size:.62rem" href="prenota.html?trattamento=${encodeURIComponent(t.nome)}">Prenota</a>
             </div>
           </div>`).join("")}
