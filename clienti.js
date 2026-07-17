@@ -210,6 +210,17 @@ window.CLIENTI = {
         "grigio":      "#5f7573",
         "gold":        "#c9a227",
         "gold-dark":   "#9a7b18",
+
+        // Tappe del gradiente dei titoli, DENTRO la famiglia teal (come yumii
+        // le tiene nel rosa). Lasciandole al default il riflesso partiva da
+        // questo oro e finiva su --rosa-dark: giallo → petrolio, cioè due
+        // famiglie quasi complementari, ed è la cosa che stonava.
+        // Contrasto su bianco: 4.8 / 7.7 / 11.6 — leggibile per tutta la parola.
+        // L'oro non sparisce: resta sugli eyebrow, sulle spunte e sui bordi,
+        // che è dove un oro sta bene.
+        "grad-1":      "#2f7d7a",
+        "grad-2":      "#1d5c5c",
+        "grad-3":      "#123f40",
       },
     },
 

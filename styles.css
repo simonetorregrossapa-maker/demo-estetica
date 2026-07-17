@@ -37,9 +37,24 @@ a{ color:inherit; }
 ::-webkit-scrollbar{ width:10px; } ::-webkit-scrollbar-thumb{ background:var(--sabbia); }
 
 .serif{ font-family:var(--font-titoli); }
-/* Accento titoli stile Twins: gradiente oro→bronzo applicato al testo */
-.italic{ font-style:italic; color:var(--gold-dark); background:linear-gradient(95deg,var(--gold) 0%,var(--gold-dark) 60%,var(--rosa-dark) 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+/* Accento titoli stile Twins: gradiente oro→bronzo applicato al testo.
+   Le 3 tappe sono token con fallback ai colori storici: un tema che non li
+   definisce resta identico a prima. Servono perché il gradiente dà per scontato
+   che --rosa-dark sia CALDO (nel default è bronzo #6e4e2e, stessa famiglia
+   dell'oro: è un riflesso metallico, non due colori diversi). Un tema con
+   --rosa-dark freddo trasforma il riflesso in oro→petrolio: due famiglie
+   opposte. Chi ribrandizza fuori dalla gamma calda deve ridefinire le tappe
+   dentro la PROPRIA famiglia (vedi yumii-nail e for-me-beauty in clienti.js). */
+.italic{ font-style:italic; color:var(--gold-dark); background:linear-gradient(95deg,var(--grad-1,var(--gold)) 0%,var(--grad-2,var(--gold-dark)) 60%,var(--grad-3,var(--rosa-dark)) 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
 @supports not ((-webkit-background-clip:text) or (background-clip:text)){ .italic{ -webkit-text-fill-color:currentColor; color:var(--gold-dark); } }
+
+/* Titolo sopra la FOTO dell'hero: il gradiente finisce su una tinta profonda,
+   che su uno sfondo scuro sparisce — l'ultima parola sembra tagliata. Non è
+   colpa di una palette: sulla foto fa 1.3:1 col teal e 1.18:1 col bronzo di
+   default, quindi è sempre stato rotto, solo che il marrone su foto calda
+   sembrava voluto. Sopra la foto il titolo resta chiaro (8.4:1). L'oro resta
+   dov'è leggibile: l'eyebrow sopra e gli accenti. */
+.hero-full h1 .italic{ background:none; -webkit-text-fill-color:var(--crema-2); color:var(--crema-2); }
 h1,h2,h3{ font-family:var(--font-titoli); font-weight:400; line-height:1.08; letter-spacing:-0.01em; }
 h1{ font-size:clamp(2.4rem,6vw,4.6rem); }
 h2{ font-size:clamp(1.9rem,4.5vw,3.4rem); }
@@ -414,7 +429,7 @@ html.lenis,html.lenis body{ height:auto; }
 .tcard img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transition:transform .6s var(--expo); }
 .tcard::after{ content:''; position:absolute; inset:0; background:linear-gradient(180deg,rgba(255,251,245,.22) 0%,rgba(255,250,243,.55) 45%,rgba(252,246,238,.88) 100%); }
 .tcard-body{ position:relative; z-index:2; padding:1.6rem 1.6rem 1.7rem; transform:translateZ(45px); }
-.tcard h3{ font-size:clamp(1.4rem,2.1vw,1.9rem); line-height:1.05; margin-bottom:.5rem; background:linear-gradient(95deg,var(--gold) 0%,var(--gold-dark) 60%,var(--rosa-dark) 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+.tcard h3{ font-size:clamp(1.4rem,2.1vw,1.9rem); line-height:1.05; margin-bottom:.5rem; background:linear-gradient(95deg,var(--grad-1,var(--gold)) 0%,var(--grad-2,var(--gold-dark)) 60%,var(--grad-3,var(--rosa-dark)) 100%); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
 .tcard p{ color:var(--carbone); font-size:.88rem; opacity:.82; max-width:30ch; margin-bottom:.7rem; }
 .tcard .more{ display:inline-flex; align-items:center; gap:.45rem; font-size:.68rem; letter-spacing:.18em; text-transform:uppercase; font-weight:700; color:var(--gold-dark); }
 .tcard .more svg{ width:14px; height:14px; stroke:currentColor; stroke-width:2.2; fill:none; transition:transform .3s var(--expo); }
